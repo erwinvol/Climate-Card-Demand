@@ -5,8 +5,8 @@
  * Features:
  * - Centered Entity Friendly Name (no entity IDs displayed)
  * - Centered Humidity display below current temperature inside the dial
- * - Removed HVAC Mode header text label
  * - Mode-based active demand gauge and thermostat circular slider
+ * - Verified temperature setpoint change with automatic retry until successful
  * - Embedded CSS styles for standalone Home Assistant rendering
  */
 
@@ -302,6 +302,16 @@ const CARD_STYLES = `
     justify-content: center;
     line-height: 1;
     margin: 3px 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  @keyframes pulse-pending {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.97); }
+  }
+
+  .ha-climate-card .target-temp-display.pending {
+    animation: pulse-pending 1.2s infinite ease-in-out;
   }
 
   .ha-climate-card .target-temp-value {
@@ -540,6 +550,10 @@ class ClimateCard extends HTMLElement {
     };
     this._hass = null;
     this._isDragging = false;
+    this._lastDraggedTemp = null;
+    this._isPendingTempChange = false;
+    this._pendingTargetTemp = null;
+    this._activeRetryController = null;
     
     // Default fallback state matched to live Home Assistant entities
     this._stateObj = {
@@ -603,6 +617,23 @@ class ClimateCard extends HTMLElement {
       const unitFromAttr = stateObj.attributes ? stateObj.attributes.unit_of_measurement : null;
       const detectedUnit = unitFromConfig || unitFromAttr || '°C';
       
+      const incomingTemp = stateObj.attributes ? stateObj.attributes.temperature : null;
+
+      // Handle pending temperature change verification
+      if (this._isPendingTempChange) {
+        if (incomingTemp === this._pendingTargetTemp) {
+          this._isPendingTempChange = false;
+          const targetTempDisplay = this.querySelector('.target-temp-display');
+          if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
+        } else {
+          // Keep showing pending target temp until Home Assistant state is updated
+          stateObj.attributes = {
+            ...stateObj.attributes,
+            temperature: this._pendingTargetTemp
+          };
+        }
+      }
+
       this._stateObj = {
         ...stateObj,
         attributes: {
@@ -900,21 +931,7 @@ class ClimateCard extends HTMLElement {
         targetTempEl.innerText = newTemp;
       }
 
-      if (card._stateObj.attributes.temperature !== newTemp) {
-        card._stateObj.attributes.temperature = newTemp;
-        
-        if (card._hass && card._config.entity) {
-          card._hass.callService('climate', 'set_temperature', {
-            entity_id: card._config.entity,
-            temperature: newTemp
-          });
-        }
-
-        card.dispatchEvent(new CustomEvent('climate-change', {
-          detail: { type: 'temperature', value: newTemp },
-          bubbles: true
-        }));
-      }
+      card._lastDraggedTemp = newTemp;
     };
 
     const onPointerDown = (e) => {
@@ -941,6 +958,10 @@ class ClimateCard extends HTMLElement {
         try {
           dialContainer.releasePointerCapture(e.pointerId);
         } catch (err) {}
+
+        if (card._lastDraggedTemp !== undefined && card._lastDraggedTemp !== null) {
+          card._commitTemperatureChange(card._lastDraggedTemp);
+        }
       }
     };
 
@@ -953,34 +974,94 @@ class ClimateCard extends HTMLElement {
   _adjustTemp(delta) {
     const attrs = this._stateObj.attributes || {};
     const minTemp = attrs.min_temp !== undefined ? attrs.min_temp : 7;
+    const currentTarget = this._isPendingTempChange
+      ? this._pendingTargetTemp
+      : (attrs.temperature !== undefined ? attrs.temperature : minTemp);
+
+    let newTemp = currentTarget + delta;
+    this._commitTemperatureChange(newTemp);
+  }
+
+  _commitTemperatureChange(targetTemp) {
+    const attrs = this._stateObj.attributes || {};
+    const minTemp = attrs.min_temp !== undefined ? attrs.min_temp : 7;
     const maxTemp = attrs.max_temp !== undefined ? attrs.max_temp : 35;
     const step = attrs.target_temp_step || 0.5;
 
-    let currentTarget = attrs.temperature !== undefined ? attrs.temperature : minTemp;
-    let newTemp = currentTarget + delta;
-    newTemp = Math.round(newTemp / step) * step;
-    newTemp = Math.max(minTemp, Math.min(maxTemp, newTemp));
+    targetTemp = Math.round(targetTemp / step) * step;
+    targetTemp = Math.max(minTemp, Math.min(maxTemp, targetTemp));
+    targetTemp = (step % 1 === 0) ? Math.round(targetTemp) : parseFloat(targetTemp.toFixed(1));
 
-    if (step % 1 === 0) {
-      newTemp = Math.round(newTemp);
-    } else {
-      newTemp = parseFloat(newTemp.toFixed(1));
-    }
+    this._pendingTargetTemp = targetTemp;
+    this._isPendingTempChange = true;
 
-    this._stateObj.attributes.temperature = newTemp;
-    this.updateUI();
-
-    if (this._hass && this._config.entity) {
-      this._hass.callService('climate', 'set_temperature', {
-        entity_id: this._config.entity,
-        temperature: newTemp
-      });
-    }
+    // Show immediate target readout with pending pulse animation
+    const targetTempEl = this.querySelector('#targetTempValue');
+    const targetTempDisplay = this.querySelector('.target-temp-display');
+    if (targetTempEl) targetTempEl.innerText = targetTemp;
+    if (targetTempDisplay) targetTempDisplay.classList.add('pending');
 
     this.dispatchEvent(new CustomEvent('climate-change', {
-      detail: { type: 'temperature', value: newTemp },
+      detail: { type: 'temperature', value: targetTemp },
       bubbles: true
     }));
+
+    this._sendSetTemperatureWithRetry(targetTemp);
+  }
+
+  async _sendSetTemperatureWithRetry(targetTemp) {
+    if (this._activeRetryController) {
+      this._activeRetryController.cancelled = true;
+    }
+
+    const controller = { cancelled: false };
+    this._activeRetryController = controller;
+
+    let attempt = 0;
+    let verifiedSuccess = false;
+
+    while (!controller.cancelled && !verifiedSuccess) {
+      attempt++;
+      try {
+        if (this._hass && this._config.entity) {
+          // Issue set_temperature service call to Home Assistant
+          await this._hass.callService('climate', 'set_temperature', {
+            entity_id: this._config.entity,
+            temperature: targetTemp
+          });
+
+          // Wait briefly for WebSocket state propagation from Home Assistant
+          await new Promise(r => setTimeout(r, 450));
+
+          const currentEntity = this._hass.states[this._config.entity];
+          if (currentEntity && currentEntity.attributes && currentEntity.attributes.temperature === targetTemp) {
+            verifiedSuccess = true;
+            break;
+          }
+        } else {
+          // Standalone / Simulator mode fallback
+          verifiedSuccess = true;
+          break;
+        }
+      } catch (err) {
+        console.warn(`[ClimateCard] set_temperature attempt ${attempt} failed, retrying...`, err);
+      }
+
+      if (!verifiedSuccess && !controller.cancelled) {
+        // Wait 800ms before retrying service call
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    if (controller.cancelled) return;
+
+    this._isPendingTempChange = false;
+    this._stateObj.attributes.temperature = targetTemp;
+
+    const targetTempDisplay = this.querySelector('.target-temp-display');
+    if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
+
+    this.updateUI();
   }
 
   _setHvacMode(mode) {
@@ -1171,6 +1252,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'climate-card',
   name: 'Custom Climate Control Card',
-  description: 'Clean climate card with centered title, dial humidity, and no entity IDs.',
+  description: 'Clean climate card with centered title, dial humidity, and setpoint retry verification.',
   preview: true
 });
