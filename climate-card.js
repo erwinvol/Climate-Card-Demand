@@ -7,7 +7,7 @@
  * - Centered Humidity display below current temperature inside the dial
  * - Mode-based active demand gauge and thermostat circular slider
  * - Verified temperature setpoint change with graceful error handling and retry cap
- * - Slider progress arc strictly clamped between lowest tickmark (135°) and highest tickmark (405°)
+ * - Slider progress arc strictly clamped between lowest tickmark (150°) and highest tickmark (390°)
  * - Embedded CSS styles for standalone Home Assistant rendering
  */
 
@@ -64,7 +64,7 @@ const CARD_STYLES = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-radius: var(--radius-xl);
-    padding: 1.75rem;
+    padding: 1.1rem 1.25rem;
     box-shadow: var(--card-shadow);
     position: relative;
     overflow: hidden;
@@ -116,7 +116,7 @@ const CARD_STYLES = `
     z-index: 1;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.75rem;
   }
 
   .ha-climate-card .card-header {
@@ -125,7 +125,7 @@ const CARD_STYLES = `
     align-items: center;
     justify-content: center;
     text-align: center;
-    gap: 0.5rem;
+    gap: 0.35rem;
   }
 
   .ha-climate-card .entity-info {
@@ -136,7 +136,7 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .entity-name {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.01em;
@@ -146,10 +146,10 @@ const CARD_STYLES = `
   .ha-climate-card .demand-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.35rem 0.85rem;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 20px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -180,9 +180,9 @@ const CARD_STYLES = `
 
   .ha-climate-card .dial-container {
     position: relative;
-    width: 285px;
-    height: 285px;
-    margin: 0.25rem auto;
+    width: 260px;
+    height: 235px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -193,9 +193,10 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .dial-svg {
-    width: 100%;
-    height: 100%;
+    width: 240px;
+    height: 240px;
     pointer-events: none;
+    margin-top: -25px;
   }
 
   .ha-climate-card .dial-tick {
@@ -316,7 +317,7 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .target-temp-value {
-    font-size: 4rem;
+    font-size: 3.2rem;
     font-weight: 700;
     letter-spacing: -0.04em;
     color: var(--text-primary);
@@ -332,21 +333,21 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .target-temp-unit {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 500;
     color: var(--text-secondary);
-    margin-top: 0.4rem;
+    margin-top: 0.35rem;
     margin-left: 2px;
   }
 
   .ha-climate-card .room-temp-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    font-size: 0.88rem;
+    gap: 0.25rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
     background: rgba(0, 0, 0, 0.05);
-    padding: 0.22rem 0.65rem;
+    padding: 0.18rem 0.55rem;
     border-radius: 12px;
     border: 1px solid var(--card-border);
   }
@@ -358,35 +359,28 @@ const CARD_STYLES = `
   .ha-climate-card .humidity-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    font-size: 0.82rem;
+    gap: 0.25rem;
+    font-size: 0.78rem;
     font-weight: 500;
     color: #0284c7;
     background: rgba(2, 132, 199, 0.1);
-    padding: 0.2rem 0.6rem;
+    padding: 0.15rem 0.55rem;
     border-radius: 10px;
     border: 1px solid rgba(2, 132, 199, 0.2);
-    margin-top: 2px;
+    margin-top: 1px;
   }
 
   .ha-climate-card .humidity-badge svg {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
     fill: currentColor;
   }
 
-  .ha-climate-card .temp-adjust-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4.5rem;
-    margin-top: 0.1rem;
-    margin-bottom: 0.25rem;
-  }
-
   .ha-climate-card .btn-adjust {
-    width: 54px;
-    height: 54px;
+    position: absolute;
+    bottom: -6px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     background: var(--btn-adjust-bg);
     border: 1px solid var(--btn-adjust-border);
@@ -398,7 +392,17 @@ const CARD_STYLES = `
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    z-index: 5;
+    pointer-events: auto;
+  }
+
+  .ha-climate-card .btn-adjust.btn-minus {
+    left: 18px;
+  }
+
+  .ha-climate-card .btn-adjust.btn-plus {
+    right: 18px;
   }
 
   .ha-climate-card .btn-adjust:hover {
@@ -408,24 +412,24 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .btn-adjust:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 
   .ha-climate-card .heatpump-demand-container {
     background: var(--demand-bg);
     border: 1px solid var(--card-border);
     border-radius: var(--radius-md);
-    padding: 0.75rem 1rem;
+    padding: 0.55rem 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
 
   .ha-climate-card .demand-meter-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
   }
 
   .ha-climate-card .demand-meter-label {
@@ -438,20 +442,20 @@ const CARD_STYLES = `
   .ha-climate-card .demand-meter-val {
     color: var(--text-primary);
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
 
   .ha-climate-card .demand-meter-track {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background: var(--dial-track-color);
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
   }
 
   .ha-climate-card .demand-meter-fill {
     height: 100%;
-    border-radius: 4px;
+    border-radius: 3px;
     transition: width 0.35s ease, background 0.35s ease;
   }
 
@@ -470,20 +474,20 @@ const CARD_STYLES = `
   .ha-climate-card .controls-section {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
 
   .ha-climate-card .mode-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.75rem;
+    gap: 0.65rem;
   }
 
   .ha-climate-card .mode-btn {
     background: var(--btn-adjust-bg);
     border: 1px solid var(--btn-adjust-border);
     border-radius: var(--radius-md);
-    padding: 0.85rem 0.5rem;
+    padding: 0.55rem 0.35rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -493,8 +497,8 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .mode-btn svg {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     transition: transform var(--transition-fast);
   }
 
@@ -593,18 +597,36 @@ class ClimateCard extends HTMLElement {
     };
   }
 
+  static getConfigElement() {
+    return document.createElement('climate-card-editor');
+  }
+
+  static getStubConfig() {
+    return {
+      title: 'First Floor Thermostat',
+      entity: 'climate.first_floor',
+      heating_demand_entity: 'sensor.first_floor_outdoor_heat_pump_demand',
+      cooling_demand_entity: 'sensor.first_floor_outdoor_cooling_demand'
+    };
+  }
+
   setConfig(config) {
-    if (!config.entity) {
-      config = { entity: 'climate.first_floor', ...config };
+    if (!config) {
+      throw new Error('Invalid configuration');
     }
-    if (!config.heating_demand_entity) {
-      config = { heating_demand_entity: 'sensor.first_floor_outdoor_heat_pump_demand', ...config };
+    this._config = {
+      title: config.title !== undefined ? config.title : (config.name !== undefined ? config.name : 'First Floor Thermostat'),
+      entity: config.entity || 'climate.first_floor',
+      heating_demand_entity: config.heating_demand_entity || 'sensor.first_floor_outdoor_heat_pump_demand',
+      cooling_demand_entity: config.cooling_demand_entity || 'sensor.first_floor_outdoor_cooling_demand',
+      ...config
+    };
+    if (this.querySelector('#cardContainer')) {
+      this.updateUI();
+    } else {
+      this._renderCardSkeleton();
+      this.updateUI();
     }
-    if (!config.cooling_demand_entity) {
-      config = { cooling_demand_entity: 'sensor.first_floor_outdoor_cooling_demand', ...config };
-    }
-    this._config = config;
-    this._renderCardSkeleton();
   }
 
   set hass(hass) {
@@ -708,7 +730,7 @@ class ClimateCard extends HTMLElement {
     const totalTicks = 28;
     for (let i = 0; i <= totalTicks; i++) {
       const pct = i / totalTicks;
-      const angleDeg = 135 + pct * 270;
+      const angleDeg = 150 + pct * 240;
       const rad = (angleDeg * Math.PI) / 180;
       
       const x1 = 120 + 84 * Math.cos(rad);
@@ -736,15 +758,15 @@ class ClimateCard extends HTMLElement {
             </div>
           </div>
 
-          <!-- Thermostat Circular Dial -->
+          <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="49.3" y1="190.7" x2="190.7" y2="190.7" gradientTransform="rotate(-135 120 120)">
+                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="33.4" y1="170" x2="206.6" y2="170" gradientTransform="rotate(-150 120 120)">
                   <stop offset="0%" stop-color="#f97316" />
                   <stop offset="100%" stop-color="#991b1b" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="49.3" y1="190.7" x2="190.7" y2="190.7" gradientTransform="rotate(-135 120 120)">
+                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="33.4" y1="170" x2="206.6" y2="170" gradientTransform="rotate(-150 120 120)">
                   <stop offset="0%" stop-color="#1e3a8a" />
                   <stop offset="100%" stop-color="#38bdf8" />
                 </linearGradient>
@@ -754,16 +776,16 @@ class ClimateCard extends HTMLElement {
                 ${ticksHtml}
               </g>
 
-              <!-- Track (Starts at 135 deg, 270 deg arc) -->
-              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(135 120 120)" />
+              <!-- Track (Starts at 150 deg, 240 deg upside-down horseshoe arc) -->
+              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" />
               <!-- Progress Arc -->
-              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(135 120 120)" />
+              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" />
               
               <!-- Current Room Temp Indicator Pin -->
               <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" />
 
               <!-- Setpoint Target Handle -->
-              <circle class="dial-handle" id="dialHandle" cx="49.3" cy="190.7" r="14" />
+              <circle class="dial-handle" id="dialHandle" cx="33.4" cy="170" r="14" />
             </svg>
 
             <!-- Center Info -->
@@ -782,12 +804,10 @@ class ClimateCard extends HTMLElement {
                 <span id="humidityValue">55% Humidity</span>
               </div>
             </div>
-          </div>
 
-          <!-- Fine Adjust Buttons (- / +) -->
-          <div class="temp-adjust-row">
-            <button class="btn-adjust" id="btnMinus" aria-label="Decrease Temperature">−</button>
-            <button class="btn-adjust" id="btnPlus" aria-label="Increase Temperature">+</button>
+            <!-- Fine Adjust Buttons (- / +) Tucked into Bottom Left / Bottom Right Low & High Break Points -->
+            <button class="btn-adjust btn-minus" id="btnMinus" aria-label="Decrease Temperature">−</button>
+            <button class="btn-adjust btn-plus" id="btnPlus" aria-label="Increase Temperature">+</button>
           </div>
 
           <!-- Dynamic Mode-Based Outdoor Demand Gauge Meter -->
@@ -810,18 +830,40 @@ class ClimateCard extends HTMLElement {
                   <path d="M12 2.1c-.2 0-.4.1-.5.3-1.6 2.5-3.5 4.8-4.5 7.8-1 3 0 6.2 2.2 8.3 2.2 2.1 5.4 2.5 8.1 1 2.7-1.5 4.2-4.6 3.7-7.7-.5-3.1-2.6-5.7-4.5-8.2-.3-.4-.8-.7-1.3-.7-.2 0-.4.1-.5.3-1 1.7-2 3.4-2.7 5.2-.2.5-.9.6-1.2.2-.5-.6-.9-1.3-1.3-2-.3-.5-.7-1-1.1-1.5-.3-.4-.5-1.4-.2z"/>
                 </svg>
               </button>
-              <button class="mode-btn" data-mode="cool" title="Cool (Cold Frost Crystal)" aria-label="Cool Mode">
-                <!-- Modern Clean Cold Frost Crystal Icon -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="2" x2="12" y2="22"></line>
-                  <line x1="3.35" y1="7" x2="20.65" y2="17"></line>
-                  <line x1="3.35" y1="17" x2="20.65" y2="7"></line>
-                  <polyline points="9 3.5 12 6 15 3.5"></polyline>
-                  <polyline points="9 20.5 12 18 15 20.5"></polyline>
-                  <polyline points="4.5 9 7.5 10.5 6 13.5"></polyline>
-                  <polyline points="19.5 15 16.5 13.5 18 10.5"></polyline>
-                  <polyline points="6 10.5 7.5 13.5 4.5 15"></polyline>
-                  <polyline points="18 13.5 16.5 10.5 19.5 9"></polyline>
+              <button class="mode-btn" data-mode="cool" title="Cool (Traditional Ice Crystal)" aria-label="Cool Mode">
+                <!-- Traditional 6-Axis Rotated Ice Crystal Snowflake Icon (Outward Forks, No Core Polygon) -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <!-- 6 Rotated Symmetric Ice Crystal Rays with Outward-Pointing Forks -->
+                  <g transform="rotate(0 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
+                  <g transform="rotate(60 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
+                  <g transform="rotate(120 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
+                  <g transform="rotate(180 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
+                  <g transform="rotate(240 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
+                  <g transform="rotate(300 12 12)">
+                    <line x1="12" y1="12" x2="12" y2="2.2" />
+                    <polyline points="9.0 4.2 12 6.0 15.0 4.2" />
+                    <polyline points="9.5 8.2 12 9.8 14.5 8.2" />
+                  </g>
                 </svg>
               </button>
               <button class="mode-btn" data-mode="off" title="Turn Off" aria-label="Turn Off">
@@ -847,8 +889,20 @@ class ClimateCard extends HTMLElement {
     // Plus / Minus Buttons
     const btnPlus = this.querySelector('#btnPlus');
     const btnMinus = this.querySelector('#btnMinus');
-    if (btnPlus) btnPlus.addEventListener('click', () => card._adjustTemp(0.5));
-    if (btnMinus) btnMinus.addEventListener('click', () => card._adjustTemp(-0.5));
+    if (btnPlus) {
+      btnPlus.addEventListener('pointerdown', (e) => e.stopPropagation());
+      btnPlus.addEventListener('click', (e) => {
+        e.stopPropagation();
+        card._adjustTemp(0.5);
+      });
+    }
+    if (btnMinus) {
+      btnMinus.addEventListener('pointerdown', (e) => e.stopPropagation());
+      btnMinus.addEventListener('click', (e) => {
+        e.stopPropagation();
+        card._adjustTemp(-0.5);
+      });
+    }
 
     // Mode Buttons
     const modeBtns = this.querySelectorAll('.mode-btn');
@@ -879,16 +933,16 @@ class ClimateCard extends HTMLElement {
       let deg = Math.atan2(dy, dx) * (180 / Math.PI);
       if (deg < 0) deg += 360;
 
-      let relativeDeg = (deg - 135 + 360) % 360;
-      if (relativeDeg > 270) {
-        relativeDeg = (relativeDeg < 315) ? 270 : 0;
+      let relativeDeg = (deg - 150 + 360) % 360;
+      if (relativeDeg > 240) {
+        relativeDeg = (relativeDeg < 300) ? 240 : 0;
       }
 
-      // Strictly clamp percentage between lowest tickmark (0.0 at 135°) and highest tickmark (1.0 at 405°)
-      const pct = Math.max(0, Math.min(1, relativeDeg / 270));
+      // Strictly clamp percentage between lowest tickmark (0.0 at 150°) and highest tickmark (1.0 at 390°)
+      const pct = Math.max(0, Math.min(1, relativeDeg / 240));
 
       // Handle & Arc Tracking
-      const angleDeg = 135 + pct * 270;
+      const angleDeg = 150 + pct * 240;
       const rad = (angleDeg * Math.PI) / 180;
       const handleX = 120 + 100 * Math.cos(rad);
       const handleY = 120 + 100 * Math.sin(rad);
@@ -898,9 +952,9 @@ class ClimateCard extends HTMLElement {
         dialHandle.setAttribute('cy', handleY.toFixed(2));
       }
 
-      // Single dash arc array (471.24 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (135°) and never extends before or past bounds
+      // Single dash arc array (418.88 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (150°) and never extends before or past bounds
       const CIRCUMFERENCE = 628.32;
-      const MAX_ARC = 471.24;
+      const MAX_ARC = 418.88;
       const dashOffset = MAX_ARC * (1 - pct);
       if (dialProgress) {
         dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
@@ -941,6 +995,7 @@ class ClimateCard extends HTMLElement {
     };
 
     const onPointerDown = (e) => {
+      if (e.target && e.target.closest('.btn-adjust')) return;
       e.preventDefault();
       card._isDragging = true;
       dialContainer.classList.add('dragging');
@@ -1137,8 +1192,12 @@ class ClimateCard extends HTMLElement {
     // 1. Theme class on main container
     cardContainer.className = `ha-climate-card mode-${mode}`;
 
-    // 2. Friendly Name
-    const displayName = this._config.name || attrs.friendly_name || 'Thermostat';
+    // 2. Friendly Name / Title
+    const displayName = (this._config.title !== undefined && this._config.title !== '') 
+      ? this._config.title 
+      : ((this._config.name !== undefined && this._config.name !== '') 
+        ? this._config.name 
+        : (attrs.friendly_name || 'Thermostat'));
     if (friendlyNameEl) friendlyNameEl.innerText = displayName;
 
     // 3. Status Badge & HVAC Action
@@ -1189,7 +1248,7 @@ class ClimateCard extends HTMLElement {
       targetPct = 0.0;
     }
 
-    const handleAngleDeg = 135 + targetPct * 270;
+    const handleAngleDeg = 150 + targetPct * 240;
     const handleRad = (handleAngleDeg * Math.PI) / 180;
     const handleX = 120 + 100 * Math.cos(handleRad);
     const handleY = 120 + 100 * Math.sin(handleRad);
@@ -1199,9 +1258,9 @@ class ClimateCard extends HTMLElement {
       dialHandle.setAttribute('cy', handleY.toFixed(2));
     }
 
-    // Single dash array (471.24 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (135°) and never extends before or past bounds
+    // Single dash array (418.88 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (150°) and never extends before or past bounds
     const CIRCUMFERENCE = 628.32;
-    const MAX_ARC = 471.24; // 2 * PI * 100 * (270 / 360) = 471.24
+    const MAX_ARC = 418.88; // 2 * PI * 100 * (240 / 360) = 418.88
     if (dialProgress) {
       dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
       const dashOffset = MAX_ARC * (1 - targetPct);
@@ -1213,7 +1272,7 @@ class ClimateCard extends HTMLElement {
     if (typeof currentTemp === 'number' && maxTemp > minTemp) {
       currentPct = Math.max(0, Math.min(1, (currentTemp - minTemp) / (maxTemp - minTemp)));
     }
-    const pinAngleDeg = 135 + currentPct * 270;
+    const pinAngleDeg = 150 + currentPct * 240;
     const pinRad = (pinAngleDeg * Math.PI) / 180;
     const pinX = 120 + 100 * Math.cos(pinRad);
     const pinY = 120 + 100 * Math.sin(pinRad);
@@ -1275,11 +1334,211 @@ if (!customElements.get('climate-card')) {
   customElements.define('climate-card', ClimateCard);
 }
 
+/**
+ * Home Assistant Lovelace Card Visual Editor Component
+ */
+class ClimateCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this._config = {};
+    this._hass = null;
+  }
+
+  setConfig(config) {
+    this._config = { ...config };
+    this.render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this.render();
+  }
+
+  render() {
+    if (!this._config) return;
+
+    const title = this._config.title !== undefined ? this._config.title : (this._config.name || '');
+    const entity = this._config.entity || '';
+    const heatingEntity = this._config.heating_demand_entity || '';
+    const coolingEntity = this._config.cooling_demand_entity || '';
+
+    let climateOptions = [];
+    let sensorOptions = [];
+
+    if (this._hass && this._hass.states) {
+      climateOptions = Object.keys(this._hass.states)
+        .filter(id => id.startsWith('climate.'))
+        .sort();
+      sensorOptions = Object.keys(this._hass.states)
+        .filter(id => id.startsWith('sensor.'))
+        .sort();
+    }
+
+    const renderSelectOptions = (options, selectedVal) => {
+      let html = '<option value="">-- Select entity from Home Assistant --</option>';
+      options.forEach(id => {
+        const friendlyName = (this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
+        const isSelected = id === selectedVal ? 'selected' : '';
+        html += `<option value="${id}" ${isSelected}>${friendlyName} (${id})</option>`;
+      });
+      return html;
+    };
+
+    this.innerHTML = `
+      <style>
+        .climate-card-editor {
+          display: flex;
+          flex-direction: column;
+          gap: 1.2rem;
+          padding: 0.5rem 0;
+          font-family: inherit;
+          color: var(--primary-text-color, #ffffff);
+        }
+        .editor-row {
+          display: flex;
+          flex-direction: column;
+          gap: 0.4rem;
+        }
+        .editor-label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          color: var(--secondary-text-color, #94a3b8);
+        }
+        .editor-input, .editor-select {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 0.65rem 0.85rem;
+          border-radius: 8px;
+          border: 1px solid var(--card-border-color, rgba(255, 255, 255, 0.15));
+          background: var(--card-background-color, rgba(15, 23, 42, 0.6));
+          color: var(--primary-text-color, #f8fafc);
+          font-size: 0.9rem;
+          outline: none;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .editor-input:focus, .editor-select:focus {
+          border-color: var(--primary-color, #38bdf8);
+          box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+        .editor-select option {
+          background: #0f172a;
+          color: #f8fafc;
+        }
+        .editor-hint {
+          font-size: 0.75rem;
+          color: var(--secondary-text-color, #64748b);
+          margin-top: 0.1rem;
+        }
+      </style>
+      <div class="climate-card-editor">
+        <div class="editor-row">
+          <label class="editor-label" for="editorTitleInput">Card Title</label>
+          <input type="text" class="editor-input" id="editorTitleInput" value="${title}" placeholder="First Floor Thermostat" />
+          <span class="editor-hint">Custom header text displayed on top of the card</span>
+        </div>
+
+        <div class="editor-row">
+          <label class="editor-label" for="editorEntityInput">Thermostat Entity (Climate)</label>
+          ${climateOptions.length > 0 ? `
+            <select class="editor-select" id="editorEntitySelect">
+              ${renderSelectOptions(climateOptions, entity)}
+            </select>
+          ` : ''}
+          <input type="text" class="editor-input" id="editorEntityInput" value="${entity}" placeholder="climate.first_floor" />
+          <span class="editor-hint">Main Home Assistant climate entity to control</span>
+        </div>
+
+        <div class="editor-row">
+          <label class="editor-label" for="editorHeatingInput">Heating Demand Sensor Entity (0 - 100%)</label>
+          ${sensorOptions.length > 0 ? `
+            <select class="editor-select" id="editorHeatingSelect">
+              ${renderSelectOptions(sensorOptions, heatingEntity)}
+            </select>
+          ` : ''}
+          <input type="text" class="editor-input" id="editorHeatingInput" value="${heatingEntity}" placeholder="sensor.first_floor_outdoor_heat_pump_demand" />
+          <span class="editor-hint">Sensor measuring outdoor heat pump heating demand percentage</span>
+        </div>
+
+        <div class="editor-row">
+          <label class="editor-label" for="editorCoolingInput">Cooling Demand Sensor Entity (0 - 100%)</label>
+          ${sensorOptions.length > 0 ? `
+            <select class="editor-select" id="editorCoolingSelect">
+              ${renderSelectOptions(sensorOptions, coolingEntity)}
+            </select>
+          ` : ''}
+          <input type="text" class="editor-input" id="editorCoolingInput" value="${coolingEntity}" placeholder="sensor.first_floor_outdoor_cooling_demand" />
+          <span class="editor-hint">Sensor measuring outdoor cooling demand percentage</span>
+        </div>
+      </div>
+    `;
+
+    this._attachListeners();
+  }
+
+  _attachListeners() {
+    const titleInput = this.querySelector('#editorTitleInput');
+    const entityInput = this.querySelector('#editorEntityInput');
+    const entitySelect = this.querySelector('#editorEntitySelect');
+    const heatingInput = this.querySelector('#editorHeatingInput');
+    const heatingSelect = this.querySelector('#editorHeatingSelect');
+    const coolingInput = this.querySelector('#editorCoolingInput');
+    const coolingSelect = this.querySelector('#editorCoolingSelect');
+
+    const updateConfig = (key, val) => {
+      this._config = {
+        ...this._config,
+        [key]: val
+      };
+      this.dispatchEvent(new CustomEvent('config-changed', {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true
+      }));
+    };
+
+    if (titleInput) {
+      titleInput.addEventListener('input', (e) => updateConfig('title', e.target.value));
+    }
+    if (entityInput) {
+      entityInput.addEventListener('input', (e) => updateConfig('entity', e.target.value));
+    }
+    if (entitySelect) {
+      entitySelect.addEventListener('change', (e) => {
+        if (entityInput) entityInput.value = e.target.value;
+        updateConfig('entity', e.target.value);
+      });
+    }
+    if (heatingInput) {
+      heatingInput.addEventListener('input', (e) => updateConfig('heating_demand_entity', e.target.value));
+    }
+    if (heatingSelect) {
+      heatingSelect.addEventListener('change', (e) => {
+        if (heatingInput) heatingInput.value = e.target.value;
+        updateConfig('heating_demand_entity', e.target.value);
+      });
+    }
+    if (coolingInput) {
+      coolingInput.addEventListener('input', (e) => updateConfig('cooling_demand_entity', e.target.value));
+    }
+    if (coolingSelect) {
+      coolingSelect.addEventListener('change', (e) => {
+        if (coolingInput) coolingInput.value = e.target.value;
+        updateConfig('cooling_demand_entity', e.target.value);
+      });
+    }
+  }
+}
+
+if (!customElements.get('climate-card-editor')) {
+  customElements.define('climate-card-editor', ClimateCardEditor);
+}
+
 // Home Assistant Lovelace Card Picker Registration
 window.customCards = window.customCards || [];
 window.customCards.push({
   type: 'climate-card',
   name: 'Custom Climate Control Card',
-  description: 'Clean climate card with centered title, dial humidity, and setpoint retry verification.',
+  description: 'Clean climate card with centered title, dial humidity, setpoint retry verification, and visual settings editor.',
   preview: true
 });
