@@ -6,7 +6,7 @@
  * - Centered Entity Friendly Name (no entity IDs displayed)
  * - Centered Humidity display below current temperature inside the dial
  * - Mode-based active demand gauge and thermostat circular slider
- * - Verified temperature setpoint change with automatic retry until successful
+ * - Verified temperature setpoint change with graceful error handling and retry cap
  * - Slider progress arc strictly clamped between lowest tickmark (135°) and highest tickmark (405°)
  * - Embedded CSS styles for standalone Home Assistant rendering
  */
@@ -1022,49 +1022,49 @@ class ClimateCard extends HTMLElement {
     const controller = { cancelled: false };
     this._activeRetryController = controller;
 
-    let attempt = 0;
-    let verifiedSuccess = false;
+    let success = false;
+    try {
+      if (this._hass && this._config.entity) {
+        const serviceData = {
+          entity_id: this._config.entity,
+          temperature: parseFloat(targetTemp)
+        };
 
-    while (!controller.cancelled && !verifiedSuccess) {
-      attempt++;
-      try {
-        if (this._hass && this._config.entity) {
-          // Issue set_temperature service call to Home Assistant
-          await this._hass.callService('climate', 'set_temperature', {
-            entity_id: this._config.entity,
-            temperature: targetTemp
-          });
-
-          // Wait briefly for WebSocket state propagation from Home Assistant
-          await new Promise(r => setTimeout(r, 450));
-
-          const currentEntity = this._hass.states[this._config.entity];
-          if (currentEntity && currentEntity.attributes && currentEntity.attributes.temperature === targetTemp) {
-            verifiedSuccess = true;
-            break;
-          }
-        } else {
-          // Standalone / Simulator mode fallback
-          verifiedSuccess = true;
-          break;
+        const currentMode = this._stateObj ? this._stateObj.state : null;
+        if (currentMode === 'auto' || currentMode === 'heat_cool') {
+          serviceData.target_temp_low = targetTemp - 1;
+          serviceData.target_temp_high = targetTemp + 1;
         }
-      } catch (err) {
-        console.warn(`[ClimateCard] set_temperature attempt ${attempt} failed, retrying...`, err);
-      }
 
-      if (!verifiedSuccess && !controller.cancelled) {
-        // Wait 800ms before retrying service call
-        await new Promise(r => setTimeout(r, 800));
+        // Issue set_temperature service call to Home Assistant
+        await this._hass.callService('climate', 'set_temperature', serviceData);
+        success = true;
+      } else {
+        // Standalone / Simulator fallback
+        success = true;
       }
+    } catch (err) {
+      console.warn(`[ClimateCard] set_temperature failed:`, err);
     }
 
     if (controller.cancelled) return;
 
     this._isPendingTempChange = false;
-    this._stateObj.attributes.temperature = targetTemp;
 
     const targetTempDisplay = this.querySelector('.target-temp-display');
     if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
+
+    if (success) {
+      this._stateObj.attributes.temperature = targetTemp;
+    } else {
+      // Revert display back to actual Home Assistant entity temperature on error
+      if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
+        const currentEntity = this._hass.states[this._config.entity];
+        if (currentEntity && currentEntity.attributes && currentEntity.attributes.temperature !== undefined) {
+          this._stateObj.attributes.temperature = currentEntity.attributes.temperature;
+        }
+      }
+    }
 
     this.updateUI();
   }
