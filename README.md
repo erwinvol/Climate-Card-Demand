@@ -1,5 +1,7 @@
 # Home Assistant Custom Climate Control Card (`custom:climate-card`)
 
+Created for Daikin Heatpumps that show the heating/cooling demand. Totally vibecoded.
+
 A modern, sleek custom Lovelace thermostat card designed for Home Assistant with interactive radial dial temperature setpoint adjustment, clean entity headers, outdoor demand visualization, dynamic mode colors, and automatic light/dark theme adaptation.
 
 ---
