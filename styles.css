@@ -21,14 +21,14 @@
 
   /* Mode Palette */
   --mode-heat-color: #ff9800;
-  --mode-heat-gradient: linear-gradient(135deg, #ffb74d, #f57c00);
+  --mode-heat-gradient: linear-gradient(135deg, #ff9800, #ef4444);
   --mode-heat-bg: rgba(255, 152, 0, 0.15);
   --mode-heat-border: rgba(255, 152, 0, 0.4);
 
-  --mode-cool-color: #00bcd4;
-  --mode-cool-gradient: linear-gradient(135deg, #4dd0e1, #0097a7);
-  --mode-cool-bg: rgba(0, 188, 212, 0.15);
-  --mode-cool-border: rgba(0, 188, 212, 0.4);
+  --mode-cool-color: #38bdf8;
+  --mode-cool-gradient: linear-gradient(135deg, #1e3a8a, #38bdf8);
+  --mode-cool-bg: rgba(2, 132, 199, 0.15);
+  --mode-cool-border: rgba(2, 132, 199, 0.4);
 
   --mode-off-color: #78909c;
   --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
@@ -64,95 +64,24 @@
   }
 }
 
-/* EXPLICIT LIGHT THEME OVERRIDE */
-[data-theme="light"] {
-  --bg-dark: #f1f5f9;
-  --card-bg: rgba(255, 255, 255, 0.95);
-  --card-border: rgba(0, 0, 0, 0.08);
-  --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
-
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-
-  --btn-adjust-bg: rgba(0, 0, 0, 0.05);
-  --btn-adjust-border: rgba(0, 0, 0, 0.1);
-  --dial-track-color: rgba(0, 0, 0, 0.07);
-  --dial-tick-color: rgba(0, 0, 0, 0.15);
-  --demand-bg: rgba(0, 0, 0, 0.04);
-}
-
-/* EXPLICIT DARK THEME OVERRIDE */
-[data-theme="dark"] {
-  --bg-dark: #090d16;
-  --card-bg: rgba(20, 27, 44, 0.88);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
-
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  --btn-adjust-bg: rgba(255, 255, 255, 0.06);
-  --btn-adjust-border: rgba(255, 255, 255, 0.12);
-  --dial-track-color: rgba(255, 255, 255, 0.06);
-  --dial-tick-color: rgba(255, 255, 255, 0.12);
-  --demand-bg: rgba(0, 0, 0, 0.2);
-}
-
-* {
-  box-sizing: border-box;
+body {
   margin: 0;
   padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
   font-family: var(--font-primary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background: var(--bg-dark);
-  color: var(--text-primary);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 2rem 1rem;
-  transition: background var(--transition-normal), color var(--transition-normal);
-}
-
-.demo-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  max-width: 650px;
-}
-
-.demo-header h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
-}
-
-.demo-header p {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.app-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  justify-content: center;
-  align-items: flex-start;
-  max-width: 1100px;
+.demo-app {
   width: 100%;
-}
-
-/* Card Container Base */
-.climate-card-wrapper {
-  width: 100%;
-  max-width: 420px;
+  max-width: 480px;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .ha-climate-card {
@@ -167,10 +96,9 @@ body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
-  transition: border-color var(--transition-normal), background var(--transition-normal), color var(--transition-normal);
+  transition: border-color var(--transition-normal), background var(--transition-normal);
 }
 
-/* Dynamic Mode Color Shifts */
 .ha-climate-card.mode-heat {
   border-color: var(--mode-heat-border);
 }
@@ -183,7 +111,6 @@ body {
   border-color: var(--mode-off-border);
 }
 
-/* Card Content Overlay */
 .card-content {
   position: relative;
   z-index: 1;
@@ -192,7 +119,7 @@ body {
   gap: 1.25rem;
 }
 
-/* CENTERED HEADER AREA */
+/* Header Section */
 .card-header {
   display: flex;
   flex-direction: column;
@@ -252,7 +179,7 @@ body {
   background: currentColor;
 }
 
-/* Thermostat Dial Section - LARGER DIAL DIMENSIONS (285px x 285px) */
+/* Thermostat Circular Dial Container */
 .dial-container {
   position: relative;
   width: 285px;
@@ -267,14 +194,12 @@ body {
   cursor: pointer;
 }
 
-/* SVG Dial Visualizer */
 .dial-svg {
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
-/* Radial Tick Marks */
 .dial-tick {
   stroke: var(--dial-tick-color);
   stroke-width: 1.8;
@@ -290,7 +215,6 @@ body {
   stroke: var(--mode-cool-color);
 }
 
-/* Circular Track & Progress Arc */
 .dial-track {
   fill: none;
   stroke: var(--dial-track-color);
@@ -316,7 +240,6 @@ body {
   stroke: var(--mode-off-color);
 }
 
-/* Current Temperature Pin Indicator */
 .dial-current-pin {
   fill: var(--text-primary);
   stroke: rgba(0, 0, 0, 0.3);
@@ -332,7 +255,6 @@ body {
   fill: #80deea;
 }
 
-/* Setpoint Handle - STRICTLY FIXED SIZE */
 .dial-handle {
   cursor: grab;
   fill: #ffffff;
@@ -357,7 +279,6 @@ body {
   fill: var(--mode-off-color);
 }
 
-/* Center Info */
 .dial-center-info {
   position: absolute;
   inset: 0;
@@ -426,7 +347,6 @@ body {
   color: var(--text-primary);
 }
 
-/* CENTERED HUMIDITY BADGE IN DIAL */
 .humidity-badge {
   display: inline-flex;
   align-items: center;
@@ -441,22 +361,13 @@ body {
   margin-top: 2px;
 }
 
-[data-theme="dark"] .humidity-badge,
-@media (prefers-color-scheme: dark) {
-  .humidity-badge {
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.12);
-    border-color: rgba(56, 189, 248, 0.25);
-  }
-}
-
 .humidity-badge svg {
   width: 13px;
   height: 13px;
   fill: currentColor;
 }
 
-/* Quick Temperature Adjuster Buttons (- / +) */
+/* Fine Adjust Buttons (- / +) */
 .temp-adjust-row {
   display: flex;
   justify-content: center;
@@ -493,7 +404,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Outdoor Demand Meter Container */
+/* Outdoor Demand Gauge Section */
 .heatpump-demand-container {
   background: var(--demand-bg);
   border: 1px solid var(--card-border);
@@ -550,14 +461,13 @@ body {
   background: var(--mode-off-gradient);
 }
 
-/* Controls Section */
+/* HVAC Controls Section */
 .controls-section {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
-/* HVAC Mode Buttons Bar */
 .mode-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -588,7 +498,7 @@ body {
 }
 
 .mode-btn[data-mode="cool"] {
-  color: #00bcd4;
+  color: #38bdf8;
 }
 
 .mode-btn[data-mode="off"] {
@@ -615,8 +525,8 @@ body {
 .mode-btn[data-mode="cool"].active {
   background: var(--mode-cool-bg);
   border-color: var(--mode-cool-border);
-  color: #26c6da;
-  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.25);
+  color: #38bdf8;
+  box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
 }
 
 .mode-btn[data-mode="off"].active {
@@ -625,78 +535,45 @@ body {
   color: #90a4ae;
 }
 
-/* Simulator Panel */
+/* Simulator Control Drawer */
 .simulator-panel {
-  flex: 1;
-  min-width: 300px;
-  max-width: 420px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  backdrop-filter: blur(16px);
-  border-radius: var(--radius-xl);
-  padding: 1.75rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px dashed var(--card-border);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  transition: background var(--transition-normal), border-color var(--transition-normal);
+  gap: 1rem;
 }
 
-.simulator-panel h2 {
-  font-size: 1.2rem;
-  font-weight: 600;
+.simulator-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sim-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--text-primary);
-}
-
-.sim-control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.sim-control-group label {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  display: flex;
   justify-content: space-between;
+  gap: 1rem;
 }
 
-.sim-control-group label span.val {
-  color: var(--text-primary);
-  font-weight: 600;
+.sim-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
 }
 
-.sim-select, .sim-input {
-  width: 100%;
-  background: var(--btn-adjust-bg);
+.sim-input {
+  width: 100px;
+  background: rgba(0, 0, 0, 0.2);
   border: 1px solid var(--btn-adjust-border);
-  color: var(--text-primary);
-  padding: 0.6rem 0.85rem;
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  outline: none;
-}
-
-.sim-select option {
-  background: var(--bg-dark);
   color: var(--text-primary);
-}
-
-.sim-slider {
-  width: 100%;
-  accent-color: #00bcd4;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .app-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .ha-climate-card, .simulator-panel {
-    max-width: 100%;
-  }
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  text-align: right;
 }
