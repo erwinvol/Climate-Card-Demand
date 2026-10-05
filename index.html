@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home Assistant Custom Climate Card Showcase</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <header class="demo-header">
+    <h1>Home Assistant Climate Control</h1>
+    <p>Supports Home Assistant Light & Dark themes with automatic system theme adaptation.</p>
+  </header>
+
+  <main class="app-container">
+    
+    <!-- Custom Climate Card Component -->
+    <div class="climate-card-wrapper">
+      <climate-card id="mainClimateCard"></climate-card>
+    </div>
+
+    <!-- Live Simulator Panel -->
+    <div class="simulator-panel">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Entity State Simulator
+      </h2>
+
+      <!-- Theme Switcher (Light / Dark Mode Test) -->
+      <div class="sim-control-group">
+        <label for="simThemeSelect">
+          Theme Mode (Light / Dark Test)
+          <span class="val">Live Adaptive</span>
+        </label>
+        <select id="simThemeSelect" class="sim-select">
+          <option value="dark" selected>🌙 Dark Theme</option>
+          <option value="light">☀️ Light Theme</option>
+          <option value="auto">💻 Auto OS System Preference</option>
+        </select>
+      </div>
+
+      <!-- Current Room Temp Slider -->
+      <div class="sim-control-group">
+        <label for="simCurrentTemp">
+          Current Room Temperature
+          <span class="val" id="simCurrentTempLabel">21.6°C</span>
+        </label>
+        <input type="range" id="simCurrentTemp" class="sim-slider" min="7" max="35" step="0.5" value="21.6">
+      </div>
+
+      <!-- Current Humidity Slider -->
+      <div class="sim-control-group">
+        <label for="simHumiditySlider">
+          Current Humidity (0-100%)
+          <span class="val" id="simHumidityLabel">55%</span>
+        </label>
+        <input type="range" id="simHumiditySlider" class="sim-slider" min="0" max="100" step="1" value="55">
+      </div>
+
+      <!-- Heating Demand Sensor Slider (0 - 100%) -->
+      <div class="sim-control-group">
+        <label for="simHeatingDemandSlider">
+          Outdoor Heating Demand Sensor (0-100%)
+          <span class="val" id="simHeatingDemandLabel">65%</span>
+        </label>
+        <input type="range" id="simHeatingDemandSlider" class="sim-slider" min="0" max="100" step="1" value="65">
+      </div>
+
+      <!-- Cooling Demand Sensor Slider (0 - 100%) -->
+      <div class="sim-control-group">
+        <label for="simCoolingDemandSlider">
+          Outdoor Cooling Demand Sensor (0-100%)
+          <span class="val" id="simCoolingDemandLabel">85%</span>
+        </label>
+        <input type="range" id="simCoolingDemandSlider" class="sim-slider" min="0" max="100" step="1" value="85">
+      </div>
+
+      <!-- System Action Selector -->
+      <div class="sim-control-group">
+        <label for="simActionSelect">
+          System Mode / Action
+          <span class="val">Switches Active Demand</span>
+        </label>
+        <select id="simActionSelect" class="sim-select">
+          <option value="heating" selected>🔥 Heat Mode (Shows Heating Demand)</option>
+          <option value="cooling">❄️ Cool Mode (Shows Cooling Demand)</option>
+          <option value="off">⭕ Off</option>
+        </select>
+      </div>
+
+      <!-- Service Call Inspector Log -->
+      <div class="sim-control-group">
+        <label>Home Assistant Live Logs</label>
+        <div id="serviceLogs" style="background: rgba(0,0,0,0.4); border: 1px solid var(--card-border); padding: 0.75rem; border-radius: 8px; font-family: monospace; font-size: 0.75rem; color: #a7f3d0; max-height: 120px; overflow-y: auto;">
+          [HA Theme] Integrated with Home Assistant CSS variables: --ha-card-background, --primary-text-color<br>[HA Theme] Theme mode set to Dark
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="climate-card.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const card = document.getElementById('mainClimateCard');
+      const simThemeSelect = document.getElementById('simThemeSelect');
+      const simCurrentTemp = document.getElementById('simCurrentTemp');
+      const simCurrentTempLabel = document.getElementById('simCurrentTempLabel');
+      const simHumiditySlider = document.getElementById('simHumiditySlider');
+      const simHumidityLabel = document.getElementById('simHumidityLabel');
+      const simHeatingDemandSlider = document.getElementById('simHeatingDemandSlider');
+      const simHeatingDemandLabel = document.getElementById('simHeatingDemandLabel');
+      const simCoolingDemandSlider = document.getElementById('simCoolingDemandSlider');
+      const simCoolingDemandLabel = document.getElementById('simCoolingDemandLabel');
+      const simActionSelect = document.getElementById('simActionSelect');
+      const serviceLogs = document.getElementById('serviceLogs');
+
+      function logServiceCall(msg) {
+        const timestamp = new Date().toLocaleTimeString();
+        const line = document.createElement('div');
+        line.innerText = `[${timestamp}] ${msg}`;
+        serviceLogs.appendChild(line);
+        serviceLogs.scrollTop = serviceLogs.scrollHeight;
+      }
+
+      // Theme toggle handler
+      simThemeSelect.addEventListener('change', () => {
+        const theme = simThemeSelect.value;
+        if (theme === 'auto') {
+          document.documentElement.removeAttribute('data-theme');
+          logServiceCall('Theme set to Auto OS Preference');
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+          logServiceCall(`Theme manually switched to: ${theme.toUpperCase()}`);
+        }
+      });
+
+      function updateCardState() {
+        const currentTemp = parseFloat(simCurrentTemp.value);
+        const humidity = parseInt(simHumiditySlider.value);
+        const heatingPct = parseFloat(simHeatingDemandSlider.value);
+        const coolingPct = parseFloat(simCoolingDemandSlider.value);
+        const action = simActionSelect.value;
+
+        simCurrentTempLabel.innerText = `${currentTemp}°C`;
+        simHumidityLabel.innerText = `${humidity}%`;
+        simHeatingDemandLabel.innerText = `${heatingPct}%`;
+        simCoolingDemandLabel.innerText = `${coolingPct}%`;
+
+        const modeState = (action === 'heating') ? 'heat' : ((action === 'cooling') ? 'cool' : 'off');
+
+        card.setSimulatedState({
+          state: modeState,
+          attributes: {
+            friendly_name: 'First Floor Thermostat',
+            current_temperature: currentTemp,
+            current_humidity: humidity,
+            hvac_action: action,
+            min_temp: 7,
+            max_temp: 35,
+            unit_of_measurement: '°C'
+          }
+        }, {
+          state: heatingPct.toString(),
+          attributes: {
+            friendly_name: 'Daikin First Floor Outdoor Heat Pump Demand',
+            unit_of_measurement: '%'
+          }
+        }, {
+          state: coolingPct.toString(),
+          attributes: {
+            friendly_name: 'Daikin First Floor Outdoor Cooling Demand',
+            unit_of_measurement: '%'
+          }
+        });
+      }
+
+      simCurrentTemp.addEventListener('input', updateCardState);
+      simHumiditySlider.addEventListener('input', updateCardState);
+
+      simHeatingDemandSlider.addEventListener('input', () => {
+        updateCardState();
+        logServiceCall(`heating_demand_entity updated to: ${simHeatingDemandSlider.value}%`);
+      });
+
+      simCoolingDemandSlider.addEventListener('input', () => {
+        updateCardState();
+        logServiceCall(`cooling_demand_entity updated to: ${simCoolingDemandSlider.value}%`);
+      });
+
+      simActionSelect.addEventListener('change', () => {
+        updateCardState();
+        logServiceCall(`System mode switched to: ${simActionSelect.value}`);
+      });
+
+      card.addEventListener('climate-change', (e) => {
+        const { type, value } = e.detail;
+        if (type === 'temperature') {
+          logServiceCall(`service: climate.set_temperature -> temperature: ${value}`);
+        } else if (type === 'hvac_mode') {
+          logServiceCall(`service: climate.set_hvac_mode -> hvac_mode: ${value}`);
+          if (value === 'heat') {
+            simActionSelect.value = 'heating';
+          } else if (value === 'cool') {
+            simActionSelect.value = 'cooling';
+          } else if (value === 'off') {
+            simActionSelect.value = 'off';
+          }
+          updateCardState();
+        }
+      });
+
+      updateCardState();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,702 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-primary: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  
+  /* DEFAULT DARK MODE TOKENS */
+  --bg-dark: #090d16;
+  --card-bg: var(--ha-card-background, var(--card-background-color, rgba(20, 27, 44, 0.88)));
+  --card-border: var(--ha-card-border-color, rgba(255, 255, 255, 0.08));
+  --card-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
+  
+  --text-primary: var(--primary-text-color, #f8fafc);
+  --text-secondary: var(--secondary-text-color, #94a3b8);
+  --text-muted: var(--disabled-text-color, #64748b);
+
+  --btn-adjust-bg: rgba(255, 255, 255, 0.06);
+  --btn-adjust-border: rgba(255, 255, 255, 0.12);
+  --dial-track-color: rgba(255, 255, 255, 0.06);
+  --dial-tick-color: rgba(255, 255, 255, 0.12);
+  --demand-bg: rgba(0, 0, 0, 0.2);
+
+  /* Mode Palette */
+  --mode-heat-color: #ff9800;
+  --mode-heat-gradient: linear-gradient(135deg, #ffb74d, #f57c00);
+  --mode-heat-bg: rgba(255, 152, 0, 0.15);
+  --mode-heat-border: rgba(255, 152, 0, 0.4);
+
+  --mode-cool-color: #00bcd4;
+  --mode-cool-gradient: linear-gradient(135deg, #4dd0e1, #0097a7);
+  --mode-cool-bg: rgba(0, 188, 212, 0.15);
+  --mode-cool-border: rgba(0, 188, 212, 0.4);
+
+  --mode-off-color: #78909c;
+  --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
+  --mode-off-bg: rgba(120, 144, 156, 0.12);
+  --mode-off-border: rgba(120, 144, 156, 0.25);
+  
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  
+  --transition-fast: 0.18s ease;
+  --transition-normal: 0.35s ease;
+}
+
+/* AUTOMATIC LIGHT MODE ADAPTATION */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-dark: #f1f5f9;
+    --card-bg: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.95)));
+    --card-border: var(--ha-card-border-color, rgba(0, 0, 0, 0.08));
+    --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+
+    --text-primary: var(--primary-text-color, #0f172a);
+    --text-secondary: var(--secondary-text-color, #475569);
+    --text-muted: var(--disabled-text-color, #94a3b8);
+
+    --btn-adjust-bg: rgba(0, 0, 0, 0.05);
+    --btn-adjust-border: rgba(0, 0, 0, 0.1);
+    --dial-track-color: rgba(0, 0, 0, 0.07);
+    --dial-tick-color: rgba(0, 0, 0, 0.15);
+    --demand-bg: rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* EXPLICIT LIGHT THEME OVERRIDE */
+[data-theme="light"] {
+  --bg-dark: #f1f5f9;
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --btn-adjust-bg: rgba(0, 0, 0, 0.05);
+  --btn-adjust-border: rgba(0, 0, 0, 0.1);
+  --dial-track-color: rgba(0, 0, 0, 0.07);
+  --dial-tick-color: rgba(0, 0, 0, 0.15);
+  --demand-bg: rgba(0, 0, 0, 0.04);
+}
+
+/* EXPLICIT DARK THEME OVERRIDE */
+[data-theme="dark"] {
+  --bg-dark: #090d16;
+  --card-bg: rgba(20, 27, 44, 0.88);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --card-shadow: 0 16px 45px rgba(0, 0, 0, 0.45);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --btn-adjust-bg: rgba(255, 255, 255, 0.06);
+  --btn-adjust-border: rgba(255, 255, 255, 0.12);
+  --dial-track-color: rgba(255, 255, 255, 0.06);
+  --dial-tick-color: rgba(255, 255, 255, 0.12);
+  --demand-bg: rgba(0, 0, 0, 0.2);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2rem 1rem;
+  transition: background var(--transition-normal), color var(--transition-normal);
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  max-width: 650px;
+}
+
+.demo-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.demo-header p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.app-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 1100px;
+  width: 100%;
+}
+
+/* Card Container Base */
+.climate-card-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+
+.ha-climate-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  box-shadow: var(--card-shadow);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: border-color var(--transition-normal), background var(--transition-normal), color var(--transition-normal);
+}
+
+/* Dynamic Mode Color Shifts */
+.ha-climate-card.mode-heat {
+  border-color: var(--mode-heat-border);
+}
+
+.ha-climate-card.mode-cool {
+  border-color: var(--mode-cool-border);
+}
+
+.ha-climate-card.mode-off {
+  border-color: var(--mode-off-border);
+}
+
+/* Card Content Overlay */
+.card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* CENTERED HEADER AREA */
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.entity-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.entity-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.demand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.demand-badge.heating {
+  background: var(--mode-heat-bg);
+  border-color: var(--mode-heat-border);
+  color: var(--mode-heat-color);
+}
+
+.demand-badge.cooling {
+  background: var(--mode-cool-bg);
+  border-color: var(--mode-cool-border);
+  color: var(--mode-cool-color);
+}
+
+.demand-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Thermostat Dial Section - LARGER DIAL DIMENSIONS (285px x 285px) */
+.dial-container {
+  position: relative;
+  width: 285px;
+  height: 285px;
+  margin: 0.25rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* SVG Dial Visualizer */
+.dial-svg {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Radial Tick Marks */
+.dial-tick {
+  stroke: var(--dial-tick-color);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  transition: stroke var(--transition-normal);
+}
+
+.ha-climate-card.mode-heat .dial-tick.active {
+  stroke: var(--mode-heat-color);
+}
+
+.ha-climate-card.mode-cool .dial-tick.active {
+  stroke: var(--mode-cool-color);
+}
+
+/* Circular Track & Progress Arc */
+.dial-track {
+  fill: none;
+  stroke: var(--dial-track-color);
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+
+.dial-progress {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: round;
+}
+
+.ha-climate-card.mode-heat .dial-progress {
+  stroke: url(#heating-gradient);
+}
+
+.ha-climate-card.mode-cool .dial-progress {
+  stroke: url(#cooling-gradient);
+}
+
+.ha-climate-card.mode-off .dial-progress {
+  stroke: var(--mode-off-color);
+}
+
+/* Current Temperature Pin Indicator */
+.dial-current-pin {
+  fill: var(--text-primary);
+  stroke: rgba(0, 0, 0, 0.3);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.ha-climate-card.mode-heat .dial-current-pin {
+  fill: #ffcc80;
+}
+
+.ha-climate-card.mode-cool .dial-current-pin {
+  fill: #80deea;
+}
+
+/* Setpoint Handle - STRICTLY FIXED SIZE */
+.dial-handle {
+  cursor: grab;
+  fill: #ffffff;
+  stroke: rgba(0, 0, 0, 0.3);
+  stroke-width: 2;
+  pointer-events: auto;
+}
+
+.dial-container.dragging .dial-handle {
+  cursor: grabbing;
+}
+
+.ha-climate-card.mode-heat .dial-handle {
+  fill: var(--mode-heat-color);
+}
+
+.ha-climate-card.mode-cool .dial-handle {
+  fill: var(--mode-cool-color);
+}
+
+.ha-climate-card.mode-off .dial-handle {
+  fill: var(--mode-off-color);
+}
+
+/* Center Info */
+.dial-center-info {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  gap: 3px;
+}
+
+.current-temp-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.target-temp-display {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  line-height: 1;
+  margin: 3px 0;
+}
+
+.target-temp-value {
+  font-size: 4rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  transition: color var(--transition-normal);
+}
+
+.ha-climate-card.mode-heat .target-temp-value {
+  color: var(--mode-heat-color);
+}
+
+.ha-climate-card.mode-cool .target-temp-value {
+  color: var(--mode-cool-color);
+}
+
+.target-temp-unit {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+  margin-left: 2px;
+}
+
+.room-temp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.22rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+}
+
+.room-temp-badge strong {
+  color: var(--text-primary);
+}
+
+/* CENTERED HUMIDITY BADGE IN DIAL */
+.humidity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.1);
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  margin-top: 2px;
+}
+
+[data-theme="dark"] .humidity-badge,
+@media (prefers-color-scheme: dark) {
+  .humidity-badge {
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.25);
+  }
+}
+
+.humidity-badge svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+/* Quick Temperature Adjuster Buttons (- / +) */
+.temp-adjust-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4.5rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.btn-adjust {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--btn-adjust-bg);
+  border: 1px solid var(--btn-adjust-border);
+  color: var(--text-primary);
+  font-size: 1.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.btn-adjust:hover {
+  background: rgba(0, 0, 0, 0.12);
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.btn-adjust:active {
+  transform: scale(0.95);
+}
+
+/* Outdoor Demand Meter Container */
+.heatpump-demand-container {
+  background: var(--demand-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.demand-meter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.demand-meter-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.demand-meter-val {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.demand-meter-track {
+  width: 100%;
+  height: 8px;
+  background: var(--dial-track-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.demand-meter-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+.ha-climate-card.mode-heat .demand-meter-fill {
+  background: var(--mode-heat-gradient);
+}
+
+.ha-climate-card.mode-cool .demand-meter-fill {
+  background: var(--mode-cool-gradient);
+}
+
+.ha-climate-card.mode-off .demand-meter-fill {
+  background: var(--mode-off-gradient);
+}
+
+/* Controls Section */
+.controls-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* HVAC Mode Buttons Bar */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.mode-btn {
+  background: var(--btn-adjust-bg);
+  border: 1px solid var(--btn-adjust-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.mode-btn svg {
+  width: 28px;
+  height: 28px;
+  transition: transform var(--transition-fast);
+}
+
+.mode-btn[data-mode="heat"] {
+  color: #ff9800;
+}
+
+.mode-btn[data-mode="cool"] {
+  color: #00bcd4;
+}
+
+.mode-btn[data-mode="off"] {
+  color: #78909c;
+}
+
+.mode-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: var(--text-secondary);
+}
+
+.mode-btn.active {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.mode-btn[data-mode="heat"].active {
+  background: var(--mode-heat-bg);
+  border-color: var(--mode-heat-border);
+  color: #ffa726;
+  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+}
+
+.mode-btn[data-mode="cool"].active {
+  background: var(--mode-cool-bg);
+  border-color: var(--mode-cool-border);
+  color: #26c6da;
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.25);
+}
+
+.mode-btn[data-mode="off"].active {
+  background: var(--mode-off-bg);
+  border-color: var(--mode-off-border);
+  color: #90a4ae;
+}
+
+/* Simulator Panel */
+.simulator-panel {
+  flex: 1;
+  min-width: 300px;
+  max-width: 420px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: background var(--transition-normal), border-color var(--transition-normal);
+}
+
+.simulator-panel h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+
+.sim-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sim-control-group label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.sim-control-group label span.val {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.sim-select, .sim-input {
+  width: 100%;
+  background: var(--btn-adjust-bg);
+  border: 1px solid var(--btn-adjust-border);
+  color: var(--text-primary);
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.sim-select option {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+}
+
+.sim-slider {
+  width: 100%;
+  accent-color: #00bcd4;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ha-climate-card, .simulator-panel {
+    max-width: 100%;
+  }
+}
