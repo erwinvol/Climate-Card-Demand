@@ -7,6 +7,7 @@
  * - Centered Humidity display below current temperature inside the dial
  * - Mode-based active demand gauge and thermostat circular slider
  * - Verified temperature setpoint change with automatic retry until successful
+ * - Slider progress arc strictly clamped between lowest tickmark (135°) and highest tickmark (405°)
  * - Embedded CSS styles for standalone Home Assistant rendering
  */
 
@@ -806,7 +807,7 @@ class ClimateCard extends HTMLElement {
               <button class="mode-btn" data-mode="heat" title="Heat (Flame)" aria-label="Heat Mode">
                 <!-- Crisp MDI Fire Flame Icon -->
                 <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2.1c-.2 0-.4.1-.5.3-1.6 2.5-3.5 4.8-4.5 7.8-1 3 0 6.2 2.2 8.3 2.2 2.1 5.4 2.5 8.1 1 2.7-1.5 4.2-4.6 3.7-7.7-.5-3.1-2.6-5.7-4.5-8.2-.3-.4-.8-.7-1.3-.7-.2 0-.4.1-.5.3-1 1.7-2 3.4-2.7 5.2-.2.5-.9.6-1.2.2-.5-.6-.9-1.3-1.3-2-.3-.5-.7-1-1.1-1.5-.3-.4-.9-.5-1.4-.2z"/>
+                  <path d="M12 2.1c-.2 0-.4.1-.5.3-1.6 2.5-3.5 4.8-4.5 7.8-1 3 0 6.2 2.2 8.3 2.2 2.1 5.4 2.5 8.1 1 2.7-1.5 4.2-4.6 3.7-7.7-.5-3.1-2.6-5.7-4.5-8.2-.3-.4-.8-.7-1.3-.7-.2 0-.4.1-.5.3-1 1.7-2 3.4-2.7 5.2-.2.5-.9.6-1.2.2-.5-.6-.9-1.3-1.3-2-.3-.5-.7-1-1.1-1.5-.3-.4-.5-1.4-.2z"/>
                 </svg>
               </button>
               <button class="mode-btn" data-mode="cool" title="Cool (Snowflake)" aria-label="Cool Mode">
@@ -882,7 +883,8 @@ class ClimateCard extends HTMLElement {
         relativeDeg = (relativeDeg < 315) ? 270 : 0;
       }
 
-      const pct = relativeDeg / 270;
+      // Strictly clamp percentage between lowest tickmark (0.0 at 135°) and highest tickmark (1.0 at 405°)
+      const pct = Math.max(0, Math.min(1, relativeDeg / 270));
 
       // Handle & Arc Tracking
       const angleDeg = 135 + pct * 270;
@@ -895,9 +897,12 @@ class ClimateCard extends HTMLElement {
         dialHandle.setAttribute('cy', handleY.toFixed(2));
       }
 
-      const totalArc = 471.24;
-      const dashOffset = totalArc * (1 - pct);
+      // Single dash arc array (471.24 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (135°) and never extends before or past bounds
+      const CIRCUMFERENCE = 628.32;
+      const MAX_ARC = 471.24;
+      const dashOffset = MAX_ARC * (1 - pct);
       if (dialProgress) {
+        dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
         dialProgress.style.strokeDashoffset = dashOffset;
       }
 
@@ -1154,13 +1159,15 @@ class ClimateCard extends HTMLElement {
       }
     }
 
-    // 7. Dial Calculations & Arc Positioning
+    // 7. Dial Calculations & Arc Positioning (Strict Clamping to lowest/highest tickmarks)
     const minTemp = attrs.min_temp !== undefined ? attrs.min_temp : 7;
     const maxTemp = attrs.max_temp !== undefined ? attrs.max_temp : 35;
     
     let targetPct = 0.5;
     if (typeof targetTemp === 'number' && maxTemp > minTemp) {
       targetPct = Math.max(0, Math.min(1, (targetTemp - minTemp) / (maxTemp - minTemp)));
+    } else {
+      targetPct = 0.0;
     }
 
     const handleAngleDeg = 135 + targetPct * 270;
@@ -1173,10 +1180,12 @@ class ClimateCard extends HTMLElement {
       dialHandle.setAttribute('cy', handleY.toFixed(2));
     }
 
-    const totalArc = 471.24; // 2 * PI * 100 * (270 / 360) = 471.24
+    // Single dash array (471.24 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (135°) and never extends before or past bounds
+    const CIRCUMFERENCE = 628.32;
+    const MAX_ARC = 471.24; // 2 * PI * 100 * (270 / 360) = 471.24
     if (dialProgress) {
-      dialProgress.style.strokeDasharray = `${totalArc} ${totalArc}`;
-      const dashOffset = totalArc * (1 - targetPct);
+      dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
+      const dashOffset = MAX_ARC * (1 - targetPct);
       dialProgress.style.strokeDashoffset = dashOffset;
     }
 
