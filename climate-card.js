@@ -37,12 +37,12 @@ const CARD_STYLES = `
     --demand-bg: rgba(0, 0, 0, 0.2);
 
     --mode-heat-color: #ff7043;
-    --mode-heat-gradient: linear-gradient(to right, #ff7043, #7f1d1d);
+    --mode-heat-gradient: linear-gradient(to right, #7f1d1d, #ff7043);
     --mode-heat-bg: rgba(255, 112, 67, 0.15);
     --mode-heat-border: rgba(255, 112, 67, 0.4);
 
     --mode-cool-color: #38bdf8;
-    --mode-cool-gradient: linear-gradient(to right, #1e40af, #38bdf8);
+    --mode-cool-gradient: linear-gradient(to right, #38bdf8, #1e40af);
     --mode-cool-bg: rgba(30, 64, 175, 0.15);
     --mode-cool-border: rgba(56, 189, 248, 0.4);
 
@@ -780,12 +780,12 @@ class ClimateCard extends HTMLElement {
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
                 <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ff7043" />
-                  <stop offset="100%" stop-color="#7f1d1d" />
+                  <stop offset="0%" stop-color="#7f1d1d" />
+                  <stop offset="100%" stop-color="#ff7043" />
                 </linearGradient>
                 <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#1e40af" />
-                  <stop offset="100%" stop-color="#38bdf8" />
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#1e40af" />
                 </linearGradient>
               </defs>
               <!-- Radial Tick Marks -->
