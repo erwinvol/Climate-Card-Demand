@@ -20,15 +20,15 @@
   --demand-bg: rgba(0, 0, 0, 0.2);
 
   /* Mode Palette */
-  --mode-heat-color: #ff9800;
-  --mode-heat-gradient: linear-gradient(135deg, #ff9800, #ef4444);
-  --mode-heat-bg: rgba(255, 152, 0, 0.15);
-  --mode-heat-border: rgba(255, 152, 0, 0.4);
+  --mode-heat-color: #f97316;
+  --mode-heat-gradient: linear-gradient(to right, #f97316, #991b1b);
+  --mode-heat-bg: rgba(249, 115, 22, 0.15);
+  --mode-heat-border: rgba(249, 115, 22, 0.4);
 
   --mode-cool-color: #38bdf8;
-  --mode-cool-gradient: linear-gradient(135deg, #1e3a8a, #38bdf8);
-  --mode-cool-bg: rgba(2, 132, 199, 0.15);
-  --mode-cool-border: rgba(2, 132, 199, 0.4);
+  --mode-cool-gradient: linear-gradient(to right, #1e3a8a, #38bdf8);
+  --mode-cool-bg: rgba(30, 58, 138, 0.15);
+  --mode-cool-border: rgba(56, 189, 248, 0.4);
 
   --mode-off-color: #78909c;
   --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
@@ -494,7 +494,7 @@ body {
 }
 
 .mode-btn[data-mode="heat"] {
-  color: #ff9800;
+  color: #f97316;
 }
 
 .mode-btn[data-mode="cool"] {
@@ -518,8 +518,8 @@ body {
 .mode-btn[data-mode="heat"].active {
   background: var(--mode-heat-bg);
   border-color: var(--mode-heat-border);
-  color: #ffa726;
-  box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+  color: #f97316;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);
 }
 
 .mode-btn[data-mode="cool"].active {
@@ -544,7 +544,7 @@ body {
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.0rem;
 }
 
 .simulator-title {

@@ -36,15 +36,15 @@ const CARD_STYLES = `
     --dial-tick-color: rgba(255, 255, 255, 0.12);
     --demand-bg: rgba(0, 0, 0, 0.2);
 
-    --mode-heat-color: #ff9800;
-    --mode-heat-gradient: linear-gradient(135deg, #ff9800, #ef4444);
-    --mode-heat-bg: rgba(255, 152, 0, 0.15);
-    --mode-heat-border: rgba(255, 152, 0, 0.4);
+    --mode-heat-color: #f97316;
+    --mode-heat-gradient: linear-gradient(to right, #f97316, #991b1b);
+    --mode-heat-bg: rgba(249, 115, 22, 0.15);
+    --mode-heat-border: rgba(249, 115, 22, 0.4);
 
     --mode-cool-color: #38bdf8;
-    --mode-cool-gradient: linear-gradient(135deg, #1e3a8a, #38bdf8);
-    --mode-cool-bg: rgba(2, 132, 199, 0.15);
-    --mode-cool-border: rgba(2, 132, 199, 0.4);
+    --mode-cool-gradient: linear-gradient(to right, #1e3a8a, #38bdf8);
+    --mode-cool-bg: rgba(30, 58, 138, 0.15);
+    --mode-cool-border: rgba(56, 189, 248, 0.4);
 
     --mode-off-color: #78909c;
     --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
@@ -499,7 +499,7 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .mode-btn[data-mode="heat"] {
-    color: #ff9800;
+    color: #f97316;
   }
 
   .ha-climate-card .mode-btn[data-mode="cool"] {
@@ -523,8 +523,8 @@ const CARD_STYLES = `
   .ha-climate-card .mode-btn[data-mode="heat"].active {
     background: var(--mode-heat-bg);
     border-color: var(--mode-heat-border);
-    color: #ffa726;
-    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+    color: #f97316;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);
   }
 
   .ha-climate-card .mode-btn[data-mode="cool"].active {
@@ -624,10 +624,6 @@ class ClimateCard extends HTMLElement {
       if (this._isPendingTempChange) {
         if (incomingTemp === this._pendingTargetTemp) {
           this._isPendingTempChange = false;
-          if (this._pendingTimeoutTimer) {
-            clearTimeout(this._pendingTimeoutTimer);
-            this._pendingTimeoutTimer = null;
-          }
           const targetTempDisplay = this.querySelector('.target-temp-display');
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
         } else {
@@ -744,11 +740,11 @@ class ClimateCard extends HTMLElement {
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#ff9800" />
-                  <stop offset="100%" stop-color="#ef4444" />
+                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="49.3" y1="190.7" x2="190.7" y2="190.7" gradientTransform="rotate(-135 120 120)">
+                  <stop offset="0%" stop-color="#f97316" />
+                  <stop offset="100%" stop-color="#991b1b" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="49.3" y1="190.7" x2="190.7" y2="190.7" gradientTransform="rotate(-135 120 120)">
                   <stop offset="0%" stop-color="#1e3a8a" />
                   <stop offset="100%" stop-color="#38bdf8" />
                 </linearGradient>
@@ -814,12 +810,18 @@ class ClimateCard extends HTMLElement {
                   <path d="M12 2.1c-.2 0-.4.1-.5.3-1.6 2.5-3.5 4.8-4.5 7.8-1 3 0 6.2 2.2 8.3 2.2 2.1 5.4 2.5 8.1 1 2.7-1.5 4.2-4.6 3.7-7.7-.5-3.1-2.6-5.7-4.5-8.2-.3-.4-.8-.7-1.3-.7-.2 0-.4.1-.5.3-1 1.7-2 3.4-2.7 5.2-.2.5-.9.6-1.2.2-.5-.6-.9-1.3-1.3-2-.3-.5-.7-1-1.1-1.5-.3-.4-.5-1.4-.2z"/>
                 </svg>
               </button>
-              <button class="mode-btn" data-mode="cool" title="Cool (Iceberg)" aria-label="Cool Mode">
-                <!-- Crisp Iceberg Icon -->
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2.5L8 9.5H16L12 2.5Z" />
-                  <path d="M3 11C4.5 10.5 6 11.5 7.5 11.5C9 11.5 10.5 10.5 12 10.5C13.5 10.5 15 11.5 16.5 11.5C18 11.5 19.5 10.5 21 11V12.5C19.5 13 18 12 16.5 12C15 12 13.5 13 12 13C10.5 13 9 12 7.5 12C6 12 4.5 13 3 12.5V11Z" opacity="0.6"/>
-                  <path d="M7.5 12.5L5.5 17.5L9.5 21.5H14.5L18.5 17.5L16.5 12.5H7.5Z" opacity="0.85"/>
+              <button class="mode-btn" data-mode="cool" title="Cool (Cold Frost Crystal)" aria-label="Cool Mode">
+                <!-- Modern Clean Cold Frost Crystal Icon -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                  <line x1="3.35" y1="7" x2="20.65" y2="17"></line>
+                  <line x1="3.35" y1="17" x2="20.65" y2="7"></line>
+                  <polyline points="9 3.5 12 6 15 3.5"></polyline>
+                  <polyline points="9 20.5 12 18 15 20.5"></polyline>
+                  <polyline points="4.5 9 7.5 10.5 6 13.5"></polyline>
+                  <polyline points="19.5 15 16.5 13.5 18 10.5"></polyline>
+                  <polyline points="6 10.5 7.5 13.5 4.5 15"></polyline>
+                  <polyline points="18 13.5 16.5 10.5 19.5 9"></polyline>
                 </svg>
               </button>
               <button class="mode-btn" data-mode="off" title="Turn Off" aria-label="Turn Off">
