@@ -376,15 +376,26 @@ const CARD_STYLES = `
     fill: currentColor;
   }
 
+  .ha-climate-card button,
+  .ha-climate-card .btn-adjust,
+  .ha-climate-card .mode-btn {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    box-sizing: border-box;
+  }
+
   .ha-climate-card .btn-adjust {
     position: absolute;
     bottom: -6px;
     width: 52px;
     height: 52px;
     border-radius: 50%;
-    background: var(--btn-adjust-bg);
-    border: 1px solid var(--btn-adjust-border);
-    color: var(--text-primary);
+    background: var(--btn-adjust-bg, rgba(255, 255, 255, 0.08));
+    border: 1px solid var(--btn-adjust-border, rgba(255, 255, 255, 0.15));
+    color: var(--text-primary, #ffffff);
     font-size: 1.7rem;
     font-weight: 600;
     display: flex;
@@ -392,9 +403,15 @@ const CARD_STYLES = `
     justify-content: center;
     cursor: pointer;
     transition: all var(--transition-fast);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     z-index: 5;
     pointer-events: auto;
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    line-height: 1;
   }
 
   .ha-climate-card .btn-adjust.btn-minus {
@@ -762,11 +779,11 @@ class ClimateCard extends HTMLElement {
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="33.4" y1="170" x2="206.6" y2="170" gradientTransform="rotate(-150 120 120)">
+                <linearGradient id="heating-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#f97316" />
                   <stop offset="100%" stop-color="#991b1b" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="33.4" y1="170" x2="206.6" y2="170" gradientTransform="rotate(-150 120 120)">
+                <linearGradient id="cooling-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#1e3a8a" />
                   <stop offset="100%" stop-color="#38bdf8" />
                 </linearGradient>
@@ -777,15 +794,15 @@ class ClimateCard extends HTMLElement {
               </g>
 
               <!-- Track (Starts at 150 deg, 240 deg upside-down horseshoe arc) -->
-              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" />
+              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
               <!-- Progress Arc -->
-              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" />
+              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
               
               <!-- Current Room Temp Indicator Pin -->
-              <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" />
+              <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" fill="#ffffff" />
 
               <!-- Setpoint Target Handle -->
-              <circle class="dial-handle" id="dialHandle" cx="33.4" cy="170" r="14" />
+              <circle class="dial-handle" id="dialHandle" cx="33.4" cy="170" r="14" fill="#ffffff" />
             </svg>
 
             <!-- Center Info -->
@@ -798,6 +815,7 @@ class ClimateCard extends HTMLElement {
               <div class="room-temp-badge">
                 Current: <strong id="currentTempValue">21.6°C</strong>
               </div>
+
               <!-- Centered Humidity Display Below Current Temp -->
               <div class="humidity-badge" id="humidityBadge">
                 <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>

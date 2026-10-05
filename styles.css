@@ -457,6 +457,15 @@ body {
   fill: currentColor;
 }
 
+button, .btn-adjust, .mode-btn {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
 /* Quick Temperature Adjuster Buttons (- / +) Positioned in Horseshoe Openings */
 .btn-adjust {
   position: absolute;
@@ -464,9 +473,9 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: var(--btn-adjust-bg);
-  border: 1px solid var(--btn-adjust-border);
-  color: var(--text-primary);
+  background: var(--btn-adjust-bg, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--btn-adjust-border, rgba(255, 255, 255, 0.15));
+  color: var(--text-primary, #ffffff);
   font-size: 1.7rem;
   font-weight: 600;
   display: flex;
@@ -474,9 +483,15 @@ body {
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   z-index: 5;
   pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  line-height: 1;
 }
 
 .btn-adjust.btn-minus {
