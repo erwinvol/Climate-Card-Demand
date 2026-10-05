@@ -7,7 +7,528 @@
  * - Centered Humidity display below current temperature inside the dial
  * - Removed HVAC Mode header text label
  * - Mode-based active demand gauge and thermostat circular slider
+ * - Embedded CSS styles for standalone Home Assistant rendering
  */
+
+const CARD_STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+  climate-card {
+    display: block;
+  }
+
+  .ha-climate-card {
+    --font-primary: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    
+    --bg-dark: #090d16;
+    --card-bg: var(--ha-card-background, var(--card-background-color, rgba(20, 27, 44, 0.88)));
+    --card-border: var(--ha-card-border-color, rgba(255, 255, 255, 0.08));
+    --card-shadow: var(--ha-card-box-shadow, 0 16px 45px rgba(0, 0, 0, 0.45));
+    
+    --text-primary: var(--primary-text-color, #f8fafc);
+    --text-secondary: var(--secondary-text-color, #94a3b8);
+    --text-muted: var(--disabled-text-color, #64748b);
+
+    --btn-adjust-bg: rgba(255, 255, 255, 0.06);
+    --btn-adjust-border: rgba(255, 255, 255, 0.12);
+    --dial-track-color: rgba(255, 255, 255, 0.06);
+    --dial-tick-color: rgba(255, 255, 255, 0.12);
+    --demand-bg: rgba(0, 0, 0, 0.2);
+
+    --mode-heat-color: #ff9800;
+    --mode-heat-gradient: linear-gradient(135deg, #ffb74d, #f57c00);
+    --mode-heat-bg: rgba(255, 152, 0, 0.15);
+    --mode-heat-border: rgba(255, 152, 0, 0.4);
+
+    --mode-cool-color: #00bcd4;
+    --mode-cool-gradient: linear-gradient(135deg, #4dd0e1, #0097a7);
+    --mode-cool-bg: rgba(0, 188, 212, 0.15);
+    --mode-cool-border: rgba(0, 188, 212, 0.4);
+
+    --mode-off-color: #78909c;
+    --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
+    --mode-off-bg: rgba(120, 144, 156, 0.12);
+    --mode-off-border: rgba(120, 144, 156, 0.25);
+    
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    
+    --transition-fast: 0.18s ease;
+    --transition-normal: 0.35s ease;
+
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: border-color var(--transition-normal), background var(--transition-normal), color var(--transition-normal);
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+  }
+
+  .ha-climate-card * {
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .ha-climate-card {
+      --bg-dark: #f1f5f9;
+      --card-bg: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.95)));
+      --card-border: var(--ha-card-border-color, rgba(0, 0, 0, 0.08));
+      --card-shadow: var(--ha-card-box-shadow, 0 16px 40px rgba(0, 0, 0, 0.08));
+
+      --text-primary: var(--primary-text-color, #0f172a);
+      --text-secondary: var(--secondary-text-color, #475569);
+      --text-muted: var(--disabled-text-color, #94a3b8);
+
+      --btn-adjust-bg: rgba(0, 0, 0, 0.05);
+      --btn-adjust-border: rgba(0, 0, 0, 0.1);
+      --dial-track-color: rgba(0, 0, 0, 0.07);
+      --dial-tick-color: rgba(0, 0, 0, 0.15);
+      --demand-bg: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .ha-climate-card.mode-heat {
+    border-color: var(--mode-heat-border);
+  }
+
+  .ha-climate-card.mode-cool {
+    border-color: var(--mode-cool-border);
+  }
+
+  .ha-climate-card.mode-off {
+    border-color: var(--mode-off-border);
+  }
+
+  .ha-climate-card .card-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .ha-climate-card .card-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem;
+  }
+
+  .ha-climate-card .entity-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .ha-climate-card .entity-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+
+  .ha-climate-card .demand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+  }
+
+  .ha-climate-card .demand-badge.heating {
+    background: var(--mode-heat-bg);
+    border-color: var(--mode-heat-border);
+    color: var(--mode-heat-color);
+  }
+
+  .ha-climate-card .demand-badge.cooling {
+    background: var(--mode-cool-bg);
+    border-color: var(--mode-cool-border);
+    color: var(--mode-cool-color);
+  }
+
+  .ha-climate-card .demand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .ha-climate-card .dial-container {
+    position: relative;
+    width: 285px;
+    height: 285px;
+    margin: 0.25rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    cursor: pointer;
+  }
+
+  .ha-climate-card .dial-svg {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .ha-climate-card .dial-tick {
+    stroke: var(--dial-tick-color);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    transition: stroke var(--transition-normal);
+  }
+
+  .ha-climate-card.mode-heat .dial-tick.active {
+    stroke: var(--mode-heat-color);
+  }
+
+  .ha-climate-card.mode-cool .dial-tick.active {
+    stroke: var(--mode-cool-color);
+  }
+
+  .ha-climate-card .dial-track {
+    fill: none;
+    stroke: var(--dial-track-color);
+    stroke-width: 14;
+    stroke-linecap: round;
+  }
+
+  .ha-climate-card .dial-progress {
+    fill: none;
+    stroke-width: 14;
+    stroke-linecap: round;
+  }
+
+  .ha-climate-card.mode-heat .dial-progress {
+    stroke: url(#heating-gradient);
+  }
+
+  .ha-climate-card.mode-cool .dial-progress {
+    stroke: url(#cooling-gradient);
+  }
+
+  .ha-climate-card.mode-off .dial-progress {
+    stroke: var(--mode-off-color);
+  }
+
+  .ha-climate-card .dial-current-pin {
+    fill: var(--text-primary);
+    stroke: rgba(0, 0, 0, 0.3);
+    stroke-width: 1.5;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+  }
+
+  .ha-climate-card.mode-heat .dial-current-pin {
+    fill: #ffcc80;
+  }
+
+  .ha-climate-card.mode-cool .dial-current-pin {
+    fill: #80deea;
+  }
+
+  .ha-climate-card .dial-handle {
+    cursor: grab;
+    fill: #ffffff;
+    stroke: rgba(0, 0, 0, 0.3);
+    stroke-width: 2;
+    pointer-events: auto;
+  }
+
+  .ha-climate-card .dial-container.dragging .dial-handle {
+    cursor: grabbing;
+  }
+
+  .ha-climate-card.mode-heat .dial-handle {
+    fill: var(--mode-heat-color);
+  }
+
+  .ha-climate-card.mode-cool .dial-handle {
+    fill: var(--mode-cool-color);
+  }
+
+  .ha-climate-card.mode-off .dial-handle {
+    fill: var(--mode-off-color);
+  }
+
+  .ha-climate-card .dial-center-info {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    gap: 3px;
+  }
+
+  .ha-climate-card .current-temp-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .ha-climate-card .target-temp-display {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 1;
+    margin: 3px 0;
+  }
+
+  .ha-climate-card .target-temp-value {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+    transition: color var(--transition-normal);
+  }
+
+  .ha-climate-card.mode-heat .target-temp-value {
+    color: var(--mode-heat-color);
+  }
+
+  .ha-climate-card.mode-cool .target-temp-value {
+    color: var(--mode-cool-color);
+  }
+
+  .ha-climate-card .target-temp-unit {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-top: 0.4rem;
+    margin-left: 2px;
+  }
+
+  .ha-climate-card .room-temp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.22rem 0.65rem;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+  }
+
+  .ha-climate-card .room-temp-badge strong {
+    color: var(--text-primary);
+  }
+
+  .ha-climate-card .humidity-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(2, 132, 199, 0.2);
+    margin-top: 2px;
+  }
+
+  .ha-climate-card .humidity-badge svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+  }
+
+  .ha-climate-card .temp-adjust-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4.5rem;
+    margin-top: 0.1rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .ha-climate-card .btn-adjust {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--btn-adjust-bg);
+    border: 1px solid var(--btn-adjust-border);
+    color: var(--text-primary);
+    font-size: 1.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .ha-climate-card .btn-adjust:hover {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+  }
+
+  .ha-climate-card .btn-adjust:active {
+    transform: scale(0.95);
+  }
+
+  .ha-climate-card .heatpump-demand-container {
+    background: var(--demand-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .ha-climate-card .demand-meter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+  }
+
+  .ha-climate-card .demand-meter-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ha-climate-card .demand-meter-val {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .ha-climate-card .demand-meter-track {
+    width: 100%;
+    height: 8px;
+    background: var(--dial-track-color);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .ha-climate-card .demand-meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.35s ease, background 0.35s ease;
+  }
+
+  .ha-climate-card.mode-heat .demand-meter-fill {
+    background: var(--mode-heat-gradient);
+  }
+
+  .ha-climate-card.mode-cool .demand-meter-fill {
+    background: var(--mode-cool-gradient);
+  }
+
+  .ha-climate-card.mode-off .demand-meter-fill {
+    background: var(--mode-off-gradient);
+  }
+
+  .ha-climate-card .controls-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .ha-climate-card .mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+  }
+
+  .ha-climate-card .mode-btn {
+    background: var(--btn-adjust-bg);
+    border: 1px solid var(--btn-adjust-border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+  }
+
+  .ha-climate-card .mode-btn svg {
+    width: 28px;
+    height: 28px;
+    transition: transform var(--transition-fast);
+  }
+
+  .ha-climate-card .mode-btn[data-mode="heat"] {
+    color: #ff9800;
+  }
+
+  .ha-climate-card .mode-btn[data-mode="cool"] {
+    color: #00bcd4;
+  }
+
+  .ha-climate-card .mode-btn[data-mode="off"] {
+    color: #78909c;
+  }
+
+  .ha-climate-card .mode-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: var(--text-secondary);
+  }
+
+  .ha-climate-card .mode-btn.active {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .ha-climate-card .mode-btn[data-mode="heat"].active {
+    background: var(--mode-heat-bg);
+    border-color: var(--mode-heat-border);
+    color: #ffa726;
+    box-shadow: 0 4px 15px rgba(255, 152, 0, 0.25);
+  }
+
+  .ha-climate-card .mode-btn[data-mode="cool"].active {
+    background: var(--mode-cool-bg);
+    border-color: var(--mode-cool-border);
+    color: #26c6da;
+    box-shadow: 0 4px 15px rgba(0, 188, 212, 0.25);
+  }
+
+  .ha-climate-card .mode-btn[data-mode="off"].active {
+    background: var(--mode-off-bg);
+    border-color: var(--mode-off-border);
+    color: #90a4ae;
+  }
+`;
 
 class ClimateCard extends HTMLElement {
   constructor() {
@@ -167,6 +688,7 @@ class ClimateCard extends HTMLElement {
     }
 
     this.innerHTML = `
+      <style>${CARD_STYLES}</style>
       <div class="ha-climate-card" id="cardContainer">
         <div class="card-content">
           
@@ -185,6 +707,16 @@ class ClimateCard extends HTMLElement {
           <!-- Thermostat Circular Dial -->
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
+              <defs>
+                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffb74d" />
+                  <stop offset="100%" stop-color="#f57c00" />
+                </linearGradient>
+                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4dd0e1" />
+                  <stop offset="100%" stop-color="#0097a7" />
+                </linearGradient>
+              </defs>
               <!-- Radial Tick Marks -->
               <g class="dial-ticks-group" id="ticksGroup">
                 ${ticksHtml}
@@ -280,8 +812,10 @@ class ClimateCard extends HTMLElement {
     const card = this;
     
     // Plus / Minus Buttons
-    this.querySelector('#btnPlus').addEventListener('click', () => card._adjustTemp(0.5));
-    this.querySelector('#btnMinus').addEventListener('click', () => card._adjustTemp(-0.5));
+    const btnPlus = this.querySelector('#btnPlus');
+    const btnMinus = this.querySelector('#btnMinus');
+    if (btnPlus) btnPlus.addEventListener('click', () => card._adjustTemp(0.5));
+    if (btnMinus) btnMinus.addEventListener('click', () => card._adjustTemp(-0.5));
 
     // Mode Buttons
     const modeBtns = this.querySelectorAll('.mode-btn');
@@ -299,6 +833,8 @@ class ClimateCard extends HTMLElement {
     const targetTempEl = this.querySelector('#targetTempValue');
     const tickEls = this.querySelectorAll('.dial-tick');
     
+    if (!dialContainer) return;
+
     const updateTempFromEvent = (e) => {
       const rect = dialContainer.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
@@ -323,12 +859,16 @@ class ClimateCard extends HTMLElement {
       const handleX = 120 + 100 * Math.cos(rad);
       const handleY = 120 + 100 * Math.sin(rad);
 
-      dialHandle.setAttribute('cx', handleX.toFixed(2));
-      dialHandle.setAttribute('cy', handleY.toFixed(2));
+      if (dialHandle) {
+        dialHandle.setAttribute('cx', handleX.toFixed(2));
+        dialHandle.setAttribute('cy', handleY.toFixed(2));
+      }
 
       const totalArc = 471.24;
       const dashOffset = totalArc * (1 - pct);
-      dialProgress.style.strokeDashoffset = dashOffset;
+      if (dialProgress) {
+        dialProgress.style.strokeDashoffset = dashOffset;
+      }
 
       const totalTicks = 28;
       const activeTicks = Math.round(pct * totalTicks);
@@ -401,7 +941,6 @@ class ClimateCard extends HTMLElement {
         try {
           dialContainer.releasePointerCapture(e.pointerId);
         } catch (err) {}
-        card.updateUI();
       }
     };
 
@@ -412,12 +951,12 @@ class ClimateCard extends HTMLElement {
   }
 
   _adjustTemp(delta) {
-    const attr = this._stateObj.attributes;
-    const currentTarget = attr.temperature !== undefined ? attr.temperature : 16;
-    const step = attr.target_temp_step || 0.5;
-    const minTemp = attr.min_temp !== undefined ? attr.min_temp : 7;
-    const maxTemp = attr.max_temp !== undefined ? attr.max_temp : 35;
-    
+    const attrs = this._stateObj.attributes || {};
+    const minTemp = attrs.min_temp !== undefined ? attrs.min_temp : 7;
+    const maxTemp = attrs.max_temp !== undefined ? attrs.max_temp : 35;
+    const step = attrs.target_temp_step || 0.5;
+
+    let currentTarget = attrs.temperature !== undefined ? attrs.temperature : minTemp;
     let newTemp = currentTarget + delta;
     newTemp = Math.round(newTemp / step) * step;
     newTemp = Math.max(minTemp, Math.min(maxTemp, newTemp));
@@ -428,10 +967,6 @@ class ClimateCard extends HTMLElement {
       newTemp = parseFloat(newTemp.toFixed(1));
     }
 
-    this._setTargetTemperature(newTemp);
-  }
-
-  _setTargetTemperature(newTemp) {
     this._stateObj.attributes.temperature = newTemp;
     this.updateUI();
 
@@ -450,12 +985,6 @@ class ClimateCard extends HTMLElement {
 
   _setHvacMode(mode) {
     this._stateObj.state = mode;
-    
-    if (mode === 'heat') this._stateObj.attributes.hvac_action = 'heating';
-    else if (mode === 'cool') this._stateObj.attributes.hvac_action = 'cooling';
-    else if (mode === 'off') this._stateObj.attributes.hvac_action = 'off';
-    else this._stateObj.attributes.hvac_action = 'idle';
-
     this.updateUI();
 
     if (this._hass && this._config.entity) {
@@ -471,82 +1000,123 @@ class ClimateCard extends HTMLElement {
     }));
   }
 
-  // Update UI Elements
   updateUI() {
-    const stateObj = this._stateObj;
-    const attr = stateObj.attributes;
-    const mode = stateObj.state || 'off';
-    const action = attr.hvac_action || (mode === 'off' ? 'off' : 'idle');
-    const unit = attr.unit_of_measurement || '°C';
-    const targetTemp = attr.temperature !== undefined ? attr.temperature : 16;
-    const currentTemp = attr.current_temperature !== undefined ? attr.current_temperature : 21.6;
-    const humidity = attr.current_humidity !== undefined ? attr.current_humidity : 55;
+    if (!this.querySelector('#cardContainer')) {
+      this._renderCardSkeleton();
+    }
 
-    // Apply Mode Theme Class to Main Card Container
     const cardContainer = this.querySelector('#cardContainer');
-    cardContainer.className = `ha-climate-card mode-${mode}`;
-
-    // Centered Friendly Name
-    const friendlyName = attr.friendly_name || 'First Floor Thermostat';
-    this.querySelector('#friendlyName').innerText = friendlyName;
-
-    // System Status Badge
+    const friendlyNameEl = this.querySelector('#friendlyName');
     const demandBadge = this.querySelector('#demandBadge');
     const demandText = this.querySelector('#demandText');
-
-    demandBadge.className = `demand-badge ${action}`;
-    demandText.innerText = action.toUpperCase();
-
-    // Mode-Based Active Demand Entity
-    const isCoolingMode = (mode === 'cool' || action === 'cooling');
-    const activeDemandObj = isCoolingMode ? this._coolingDemandObj : this._heatingDemandObj;
-    const demandLabelText = isCoolingMode ? 'Outdoor Cooling Demand' : 'Outdoor Heating Demand';
-
-    const demandValRaw = parseFloat(activeDemandObj.state) || 0;
-    const demandValClamped = Math.max(0, Math.min(100, demandValRaw));
-    
-    const demandMeterLabelEl = this.querySelector('#demandMeterLabel');
-    const heatpumpValEl = this.querySelector('#heatpumpDemandVal');
-    const heatpumpFillEl = this.querySelector('#heatpumpDemandFill');
-
-    if (demandMeterLabelEl) demandMeterLabelEl.innerText = demandLabelText;
-
-    if (heatpumpValEl && heatpumpFillEl) {
-      heatpumpValEl.innerText = `${demandValClamped.toFixed(0)}%`;
-      heatpumpFillEl.style.width = `${demandValClamped}%`;
-    }
-
-    // Direct Target Setpoint Text Display Update
     const targetTempEl = this.querySelector('#targetTempValue');
-    if (targetTempEl) {
-      targetTempEl.innerText = targetTemp;
-    }
-
-    this.querySelector('#tempUnit').innerText = unit;
-    this.querySelector('#currentTempValue').innerText = `${currentTemp}${unit}`;
-
-    // Centered Humidity Display Below Current Temp
+    const tempUnitEl = this.querySelector('#tempUnit');
+    const currentTempEl = this.querySelector('#currentTempValue');
+    const humidityBadge = this.querySelector('#humidityBadge');
     const humidityValueEl = this.querySelector('#humidityValue');
-    if (humidityValueEl) {
-      humidityValueEl.innerText = `${humidity}% Humidity`;
+    const dialHandle = this.querySelector('#dialHandle');
+    const dialProgress = this.querySelector('#dialProgress');
+    const currentPin = this.querySelector('#currentPin');
+    const tickEls = this.querySelectorAll('.dial-tick');
+    const demandMeterLabel = this.querySelector('#demandMeterLabel');
+    const heatpumpDemandVal = this.querySelector('#heatpumpDemandVal');
+    const heatpumpDemandFill = this.querySelector('#heatpumpDemandFill');
+
+    if (!cardContainer) return;
+
+    const stateObj = this._stateObj;
+    const attrs = stateObj.attributes || {};
+    const mode = stateObj.state || 'off';
+    const unit = attrs.unit_of_measurement || '°C';
+
+    // 1. Theme class on main container
+    cardContainer.className = `ha-climate-card mode-${mode}`;
+
+    // 2. Friendly Name
+    const displayName = this._config.name || attrs.friendly_name || 'Thermostat';
+    if (friendlyNameEl) friendlyNameEl.innerText = displayName;
+
+    // 3. Status Badge & HVAC Action
+    const hvacAction = attrs.hvac_action || (mode === 'off' ? 'off' : 'idle');
+    if (demandBadge) {
+      demandBadge.className = 'demand-badge';
+      if (hvacAction === 'heating') demandBadge.classList.add('heating');
+      if (hvacAction === 'cooling') demandBadge.classList.add('cooling');
+    }
+    if (demandText) {
+      demandText.innerText = hvacAction.toUpperCase();
     }
 
-    // Circular Dial Progress Range & Ticks
-    const minTemp = attr.min_temp !== undefined ? attr.min_temp : 7;
-    const maxTemp = attr.max_temp !== undefined ? attr.max_temp : 35;
-    const pct = Math.max(0, Math.min(1, (targetTemp - minTemp) / (maxTemp - minTemp)));
+    // 4. Setpoint Target Display
+    const targetTemp = attrs.temperature !== undefined ? attrs.temperature : '--';
+    if (targetTempEl) targetTempEl.innerText = targetTemp;
+    if (tempUnitEl) tempUnitEl.innerText = unit;
+
+    // 5. Current Room Temperature
+    const currentTemp = attrs.current_temperature !== undefined ? attrs.current_temperature : '--';
+    if (currentTempEl) currentTempEl.innerText = `${currentTemp}${unit}`;
+
+    // 6. Centered Humidity Display Inside Dial
+    let humidityVal = null;
+    if (this._config.humidity_entity && this._hass && this._hass.states[this._config.humidity_entity]) {
+      humidityVal = this._hass.states[this._config.humidity_entity].state;
+    } else if (attrs.current_humidity !== undefined) {
+      humidityVal = attrs.current_humidity;
+    }
+
+    if (humidityValueEl && humidityBadge) {
+      if (humidityVal !== null && humidityVal !== undefined && humidityVal !== 'unavailable' && humidityVal !== 'unknown') {
+        humidityValueEl.innerText = `${humidityVal}% Humidity`;
+        humidityBadge.style.display = 'inline-flex';
+      } else {
+        humidityBadge.style.display = 'none';
+      }
+    }
+
+    // 7. Dial Calculations & Arc Positioning
+    const minTemp = attrs.min_temp !== undefined ? attrs.min_temp : 7;
+    const maxTemp = attrs.max_temp !== undefined ? attrs.max_temp : 35;
     
-    const totalArc = 471.24;
-    const dashOffset = totalArc * (1 - pct);
+    let targetPct = 0.5;
+    if (typeof targetTemp === 'number' && maxTemp > minTemp) {
+      targetPct = Math.max(0, Math.min(1, (targetTemp - minTemp) / (maxTemp - minTemp)));
+    }
 
-    const dialProgress = this.querySelector('#dialProgress');
-    dialProgress.style.strokeDasharray = `471.24 628.32`;
-    dialProgress.style.strokeDashoffset = dashOffset;
+    const handleAngleDeg = 135 + targetPct * 270;
+    const handleRad = (handleAngleDeg * Math.PI) / 180;
+    const handleX = 120 + 100 * Math.cos(handleRad);
+    const handleY = 120 + 100 * Math.sin(handleRad);
 
-    // Highlight radial tick marks up to target percentage
+    if (dialHandle) {
+      dialHandle.setAttribute('cx', handleX.toFixed(2));
+      dialHandle.setAttribute('cy', handleY.toFixed(2));
+    }
+
+    const totalArc = 471.24; // 2 * PI * 100 * (270 / 360) = 471.24
+    if (dialProgress) {
+      dialProgress.style.strokeDasharray = `${totalArc} ${totalArc}`;
+      const dashOffset = totalArc * (1 - targetPct);
+      dialProgress.style.strokeDashoffset = dashOffset;
+    }
+
+    // Current Temp Pin Positioning
+    let currentPct = 0.5;
+    if (typeof currentTemp === 'number' && maxTemp > minTemp) {
+      currentPct = Math.max(0, Math.min(1, (currentTemp - minTemp) / (maxTemp - minTemp)));
+    }
+    const pinAngleDeg = 135 + currentPct * 270;
+    const pinRad = (pinAngleDeg * Math.PI) / 180;
+    const pinX = 120 + 100 * Math.cos(pinRad);
+    const pinY = 120 + 100 * Math.sin(pinRad);
+
+    if (currentPin) {
+      currentPin.setAttribute('cx', pinX.toFixed(2));
+      currentPin.setAttribute('cy', pinY.toFixed(2));
+    }
+
+    // Dial Ticks Highlighting
     const totalTicks = 28;
-    const activeTicks = Math.round(pct * totalTicks);
-    const tickEls = this.querySelectorAll('.dial-tick');
+    const activeTicks = Math.round(targetPct * totalTicks);
     tickEls.forEach((tick, idx) => {
       if (idx <= activeTicks && mode !== 'off') {
         tick.classList.add('active');
@@ -555,30 +1125,30 @@ class ClimateCard extends HTMLElement {
       }
     });
 
-    // Position Draggable Target Handle (cx, cy)
-    const angleDeg = 135 + pct * 270;
-    const rad = (angleDeg * Math.PI) / 180;
-    const handleX = 120 + 100 * Math.cos(rad);
-    const handleY = 120 + 100 * Math.sin(rad);
+    // 8. Demand Meter Progress Bar Calculation
+    let activeDemand = 0;
+    let labelText = 'Outdoor System Demand';
 
-    const dialHandle = this.querySelector('#dialHandle');
-    dialHandle.setAttribute('cx', handleX.toFixed(2));
-    dialHandle.setAttribute('cy', handleY.toFixed(2));
-
-    // Position Current Room Temp Indicator Pin
-    const pctCurrent = Math.max(0, Math.min(1, (currentTemp - minTemp) / (maxTemp - minTemp)));
-    const pinAngleDeg = 135 + pctCurrent * 270;
-    const pinRad = (pinAngleDeg * Math.PI) / 180;
-    const pinX = 120 + 100 * Math.cos(pinRad);
-    const pinY = 120 + 100 * Math.sin(pinRad);
-
-    const currentPin = this.querySelector('#currentPin');
-    if (currentPin) {
-      currentPin.setAttribute('cx', pinX.toFixed(2));
-      currentPin.setAttribute('cy', pinY.toFixed(2));
+    if (mode === 'heat') {
+      labelText = 'Outdoor Heating Demand';
+      if (this._heatingDemandObj && !isNaN(parseFloat(this._heatingDemandObj.state))) {
+        activeDemand = parseFloat(this._heatingDemandObj.state);
+      }
+    } else if (mode === 'cool') {
+      labelText = 'Outdoor Cooling Demand';
+      if (this._coolingDemandObj && !isNaN(parseFloat(this._coolingDemandObj.state))) {
+        activeDemand = parseFloat(this._coolingDemandObj.state);
+      }
+    } else {
+      labelText = 'System Demand (Off)';
+      activeDemand = 0;
     }
 
-    // Active Mode Button Highlight
+    if (demandMeterLabel) demandMeterLabel.innerText = labelText;
+    if (heatpumpDemandVal) heatpumpDemandVal.innerText = `${activeDemand.toFixed(0)}%`;
+    if (heatpumpDemandFill) heatpumpDemandFill.style.width = `${Math.min(100, Math.max(0, activeDemand))}%`;
+
+    // 9. Active Mode Button Highlight
     const modeBtns = this.querySelectorAll('.mode-btn');
     modeBtns.forEach(btn => {
       const btnMode = btn.getAttribute('data-mode');
