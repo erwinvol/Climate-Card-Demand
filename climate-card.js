@@ -555,6 +555,7 @@ class ClimateCard extends HTMLElement {
     this._isPendingTempChange = false;
     this._pendingTargetTemp = null;
     this._activeRetryController = null;
+    this._pendingTimeoutTimer = null;
     
     // Default fallback state matched to live Home Assistant entities
     this._stateObj = {
@@ -624,6 +625,10 @@ class ClimateCard extends HTMLElement {
       if (this._isPendingTempChange) {
         if (incomingTemp === this._pendingTargetTemp) {
           this._isPendingTempChange = false;
+          if (this._pendingTimeoutTimer) {
+            clearTimeout(this._pendingTimeoutTimer);
+            this._pendingTimeoutTimer = null;
+          }
           const targetTempDisplay = this.querySelector('.target-temp-display');
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
         } else {
@@ -1019,6 +1024,11 @@ class ClimateCard extends HTMLElement {
       this._activeRetryController.cancelled = true;
     }
 
+    if (this._pendingTimeoutTimer) {
+      clearTimeout(this._pendingTimeoutTimer);
+      this._pendingTimeoutTimer = null;
+    }
+
     const controller = { cancelled: false };
     this._activeRetryController = controller;
 
@@ -1049,14 +1059,27 @@ class ClimateCard extends HTMLElement {
 
     if (controller.cancelled) return;
 
-    this._isPendingTempChange = false;
-
-    const targetTempDisplay = this.querySelector('.target-temp-display');
-    if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
-
     if (success) {
       this._stateObj.attributes.temperature = targetTemp;
+      // Keep pending lock active so incoming HA state updates won't bounce back old temp before cloud sync
+      this._pendingTimeoutTimer = setTimeout(() => {
+        if (!controller.cancelled && this._isPendingTempChange) {
+          this._isPendingTempChange = false;
+          const targetTempDisplay = this.querySelector('.target-temp-display');
+          if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
+          if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
+            const currentEntity = this._hass.states[this._config.entity];
+            if (currentEntity && currentEntity.attributes && currentEntity.attributes.temperature !== undefined) {
+              this._stateObj.attributes.temperature = currentEntity.attributes.temperature;
+            }
+          }
+          this.updateUI();
+        }
+      }, 12000);
     } else {
+      this._isPendingTempChange = false;
+      const targetTempDisplay = this.querySelector('.target-temp-display');
+      if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
       // Revert display back to actual Home Assistant entity temperature on error
       if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
         const currentEntity = this._hass.states[this._config.entity];
