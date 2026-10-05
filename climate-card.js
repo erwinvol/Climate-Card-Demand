@@ -36,14 +36,14 @@ const CARD_STYLES = `
     --dial-tick-color: rgba(255, 255, 255, 0.12);
     --demand-bg: rgba(0, 0, 0, 0.2);
 
-    --mode-heat-color: #f97316;
-    --mode-heat-gradient: linear-gradient(to right, #f97316, #991b1b);
-    --mode-heat-bg: rgba(249, 115, 22, 0.15);
-    --mode-heat-border: rgba(249, 115, 22, 0.4);
+    --mode-heat-color: #ff7043;
+    --mode-heat-gradient: linear-gradient(to right, #ff7043, #7f1d1d);
+    --mode-heat-bg: rgba(255, 112, 67, 0.15);
+    --mode-heat-border: rgba(255, 112, 67, 0.4);
 
     --mode-cool-color: #38bdf8;
-    --mode-cool-gradient: linear-gradient(to right, #1e3a8a, #38bdf8);
-    --mode-cool-bg: rgba(30, 58, 138, 0.15);
+    --mode-cool-gradient: linear-gradient(to right, #1e40af, #38bdf8);
+    --mode-cool-bg: rgba(30, 64, 175, 0.15);
     --mode-cool-border: rgba(56, 189, 248, 0.4);
 
     --mode-off-color: #78909c;
@@ -520,7 +520,7 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .mode-btn[data-mode="heat"] {
-    color: #f97316;
+    color: #ff7043;
   }
 
   .ha-climate-card .mode-btn[data-mode="cool"] {
@@ -544,15 +544,15 @@ const CARD_STYLES = `
   .ha-climate-card .mode-btn[data-mode="heat"].active {
     background: var(--mode-heat-bg);
     border-color: var(--mode-heat-border);
-    color: #f97316;
-    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.25);
+    color: #ff7043;
+    box-shadow: 0 4px 15px rgba(255, 112, 67, 0.25);
   }
 
   .ha-climate-card .mode-btn[data-mode="cool"].active {
     background: var(--mode-cool-bg);
     border-color: var(--mode-cool-border);
     color: #38bdf8;
-    box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
   }
 
   .ha-climate-card .mode-btn[data-mode="off"].active {
@@ -779,12 +779,12 @@ class ClimateCard extends HTMLElement {
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#f97316" />
-                  <stop offset="100%" stop-color="#991b1b" />
+                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ff7043" />
+                  <stop offset="100%" stop-color="#7f1d1d" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#1e3a8a" />
+                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#1e40af" />
                   <stop offset="100%" stop-color="#38bdf8" />
                 </linearGradient>
               </defs>

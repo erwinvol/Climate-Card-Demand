@@ -20,14 +20,14 @@
   --demand-bg: rgba(0, 0, 0, 0.2);
 
   /* Mode Palette */
-  --mode-heat-color: #f97316;
-  --mode-heat-gradient: linear-gradient(to right, #f97316, #991b1b);
-  --mode-heat-bg: rgba(249, 115, 22, 0.15);
-  --mode-heat-border: rgba(249, 115, 22, 0.4);
+  --mode-heat-color: #ff7043;
+  --mode-heat-gradient: linear-gradient(to right, #ff7043, #7f1d1d);
+  --mode-heat-bg: rgba(255, 112, 67, 0.15);
+  --mode-heat-border: rgba(255, 112, 67, 0.4);
 
   --mode-cool-color: #38bdf8;
-  --mode-cool-gradient: linear-gradient(to right, #1e3a8a, #38bdf8);
-  --mode-cool-bg: rgba(30, 58, 138, 0.15);
+  --mode-cool-gradient: linear-gradient(to right, #1e40af, #38bdf8);
+  --mode-cool-bg: rgba(30, 64, 175, 0.15);
   --mode-cool-border: rgba(56, 189, 248, 0.4);
 
   --mode-off-color: #78909c;
