@@ -178,8 +178,8 @@ const CARD_STYLES = `
 
   .ha-climate-card .dial-container {
     position: relative;
-    width: 260px;
-    height: 235px;
+    width: 312px;
+    height: 282px;
     margin: 0 auto;
     display: flex;
     align-items: center;
@@ -191,10 +191,10 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .dial-svg {
-    width: 240px;
-    height: 240px;
+    width: 288px;
+    height: 288px;
     pointer-events: none;
-    margin-top: -25px;
+    margin-top: -30px;
   }
 
   .ha-climate-card .dial-tick {
@@ -398,11 +398,11 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .btn-adjust.btn-minus {
-    left: 18px;
+    left: 14px;
   }
 
   .ha-climate-card .btn-adjust.btn-plus {
-    right: 18px;
+    right: 14px;
   }
 
   .ha-climate-card .btn-adjust:hover {
@@ -548,7 +548,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.05-v4';
+const CLIMATE_CARD_VERSION = '2026.10.06-v5';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -695,14 +695,14 @@ class ClimateCard extends HTMLElement {
       
       const incomingTemp = stateObj.attributes ? stateObj.attributes.temperature : null;
 
-      // Handle pending temperature change verification
+      // Handle pending temperature change verification (keep pulse active for 5 seconds)
       if (this._isPendingTempChange) {
-        if (incomingTemp === this._pendingTargetTemp) {
+        if (Date.now() >= (this._pendingUntilTime || 0)) {
           this._isPendingTempChange = false;
           const targetTempDisplay = this.shadowRoot ? this.shadowRoot.querySelector('.target-temp-display') : null;
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
         } else {
-          // Keep showing pending target temp until Home Assistant state is updated
+          // Keep showing pending target temp until 5s window completes
           stateObj.attributes = {
             ...stateObj.attributes,
             temperature: this._pendingTargetTemp
@@ -804,17 +804,11 @@ class ClimateCard extends HTMLElement {
             <div class="entity-info">
               <div class="entity-name" id="friendlyName">First Floor Thermostat</div>
             </div>
-
-            <!-- System Status Badge -->
-            <div class="demand-badge" id="demandBadge">
-              <span class="demand-dot"></span>
-              <span id="demandText">IDLE</span>
-            </div>
           </div>
 
           <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
-            <svg class="dial-svg" viewBox="0 0 240 240" width="240" height="240" style="width: 240px; height: 240px; max-width: 100%; display: block; margin: -25px auto 0 auto; pointer-events: none;">
+            <svg class="dial-svg" viewBox="0 0 240 240" width="288" height="288" style="width: 288px; height: 288px; max-width: 100%; display: block; margin: -30px auto 0 auto; pointer-events: none;">
               <!-- Radial Tick Marks -->
               <g class="dial-ticks-group" id="ticksGroup">
                 ${ticksHtml}
@@ -834,6 +828,12 @@ class ClimateCard extends HTMLElement {
 
             <!-- Center Info -->
             <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px;">
+              <!-- System Status Badge Above Target Temp -->
+              <div class="demand-badge" id="demandBadge" style="margin-bottom: 2px;">
+                <span class="demand-dot"></span>
+                <span id="demandText">IDLE</span>
+              </div>
+
               <span class="current-temp-label" id="modeSublabel">TARGET TEMP</span>
               <div class="target-temp-display" style="display: flex; align-items: flex-start; justify-content: center; line-height: 1; margin: 3px 0;">
                 <span class="target-temp-value" id="targetTempValue">16</span>
@@ -851,8 +851,8 @@ class ClimateCard extends HTMLElement {
             </div>
 
             <!-- Fine Adjust Buttons (- / +) Tucked into Bottom Left / Bottom Right Low & High Break Points -->
-            <button class="btn-adjust btn-minus" id="btnMinus" aria-label="Decrease Temperature" style="position: absolute; bottom: -6px; left: 18px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">−</button>
-            <button class="btn-adjust btn-plus" id="btnPlus" aria-label="Increase Temperature" style="position: absolute; bottom: -6px; right: 18px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">+</button>
+            <button class="btn-adjust btn-minus" id="btnMinus" aria-label="Decrease Temperature" style="position: absolute; bottom: -6px; left: 14px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">−</button>
+            <button class="btn-adjust btn-plus" id="btnPlus" aria-label="Increase Temperature" style="position: absolute; bottom: -6px; right: 14px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">+</button>
           </div>
 
           <!-- Dynamic Mode-Based Outdoor Demand Gauge Meter -->
@@ -1097,12 +1097,25 @@ class ClimateCard extends HTMLElement {
 
     this._pendingTargetTemp = targetTemp;
     this._isPendingTempChange = true;
+    this._pendingUntilTime = Date.now() + 5000;
 
-    // Show immediate target readout with pending pulse animation
-    const targetTempEl = this.shadowRoot.querySelector('#targetTempValue');
-    const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');
+    // Show immediate target readout with pending pulse animation for 5 seconds
+    const targetTempEl = this.shadowRoot ? this.shadowRoot.querySelector('#targetTempValue') : null;
+    const targetTempDisplay = this.shadowRoot ? this.shadowRoot.querySelector('.target-temp-display') : null;
     if (targetTempEl) targetTempEl.innerText = targetTemp;
     if (targetTempDisplay) targetTempDisplay.classList.add('pending');
+
+    if (this._pulseTimer) {
+      clearTimeout(this._pulseTimer);
+    }
+    this._pulseTimer = setTimeout(() => {
+      if (Date.now() >= (this._pendingUntilTime || 0)) {
+        this._isPendingTempChange = false;
+        const targetDisplay = this.shadowRoot ? this.shadowRoot.querySelector('.target-temp-display') : null;
+        if (targetDisplay) targetDisplay.classList.remove('pending');
+        this.updateUI();
+      }
+    }, 5000);
 
     this.dispatchEvent(new CustomEvent('climate-change', {
       detail: { type: 'temperature', value: targetTemp },
@@ -1154,11 +1167,11 @@ class ClimateCard extends HTMLElement {
 
     if (success) {
       this._stateObj.attributes.temperature = targetTemp;
-      // Keep pending lock active so incoming HA state updates won't bounce back old temp before cloud sync
+      // Keep pending lock active so incoming HA state updates won't bounce back old temp before cloud sync completes
       this._pendingTimeoutTimer = setTimeout(() => {
-        if (!controller.cancelled && this._isPendingTempChange) {
+        if (!controller.cancelled && Date.now() >= (this._pendingUntilTime || 0)) {
           this._isPendingTempChange = false;
-          const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');
+          const targetTempDisplay = this.shadowRoot ? this.shadowRoot.querySelector('.target-temp-display') : null;
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
           if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
             const currentEntity = this._hass.states[this._config.entity];
@@ -1168,7 +1181,7 @@ class ClimateCard extends HTMLElement {
           }
           this.updateUI();
         }
-      }, 12000);
+      }, 5000);
     } else {
       this._isPendingTempChange = false;
       const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');

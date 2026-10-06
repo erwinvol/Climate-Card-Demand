@@ -255,8 +255,8 @@ body {
 /* Thermostat Dial Section - Upside-Down Horseshoe Arch Dimensions */
 .dial-container {
   position: relative;
-  width: 260px;
-  height: 235px;
+  width: 312px;
+  height: 282px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -269,10 +269,10 @@ body {
 
 /* SVG Dial Visualizer */
 .dial-svg {
-  width: 240px;
-  height: 240px;
+  width: 288px;
+  height: 288px;
   pointer-events: none;
-  margin-top: -25px;
+  margin-top: -30px;
 }
 
 /* Radial Tick Marks */
@@ -495,11 +495,11 @@ button, .btn-adjust, .mode-btn {
 }
 
 .btn-adjust.btn-minus {
-  left: 18px;
+  left: 14px;
 }
 
 .btn-adjust.btn-plus {
-  right: 18px;
+  right: 14px;
 }
 
 .btn-adjust:hover {
