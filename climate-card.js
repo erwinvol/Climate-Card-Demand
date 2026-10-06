@@ -12,14 +12,12 @@
  */
 
 const CARD_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-
-  climate-card {
+  :host {
     display: block;
   }
 
   .ha-climate-card {
-    --font-primary: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-primary: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     
     --bg-dark: #090d16;
     --card-bg: var(--ha-card-background, var(--card-background-color, rgba(20, 27, 44, 0.88)));
@@ -214,9 +212,14 @@ const CARD_STYLES = `
     stroke: var(--mode-cool-color);
   }
 
-  .ha-climate-card .dial-track {
-    fill: none;
+  .ha-climate-card .dial-track,
+  svg path.dial-track {
+    fill: none !important;
     stroke: var(--dial-track-color);
+  }
+
+  #progressGroup path {
+    fill: none !important;
   }
 
   .ha-climate-card .dial-current-pin {
@@ -494,8 +497,11 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .mode-btn svg {
-    width: 22px;
-    height: 22px;
+    width: 22px !important;
+    height: 22px !important;
+    max-width: 22px !important;
+    max-height: 22px !important;
+    display: block !important;
     transition: transform var(--transition-fast);
   }
 
@@ -542,7 +548,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.05-seg';
+const CLIMATE_CARD_VERSION = '2026.10.05-v3';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -583,7 +589,7 @@ class ClimateCard extends HTMLElement {
         const t = ((a + a1) / 2 - START) / SPAN;
         // +0.6deg overlap hides anti-aliasing seams between segments
         const a1o = Math.min(a1 + 0.6, end);
-        svg += `<path d="${ClimateCard._arcPath(a, a1o)}" fill="none" stroke="${ClimateCard._modeColor(mode, t)}" stroke-width="14" stroke-linecap="butt" />`;
+        svg += `<path d="${ClimateCard._arcPath(a, a1o)}" fill="none" style="fill: none !important;" stroke="${ClimateCard._modeColor(mode, t)}" stroke-width="14" stroke-linecap="butt" />`;
       }
     }
     // Round start cap (always drawn so the arc begins at the lowest tickmark)
@@ -808,14 +814,14 @@ class ClimateCard extends HTMLElement {
 
           <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
-            <svg class="dial-svg" viewBox="0 0 240 240">
+            <svg class="dial-svg" viewBox="0 0 240 240" width="240" height="240" style="width: 240px; height: 240px; max-width: 100%; display: block; margin: -25px auto 0 auto; pointer-events: none;">
               <!-- Radial Tick Marks -->
               <g class="dial-ticks-group" id="ticksGroup">
                 ${ticksHtml}
               </g>
 
-              <!-- Track: explicit 240deg arc path (150deg -> 390deg), all paint set inline -->
-              <path class="dial-track" d="${ClimateCard._arcPath(150, 390)}" fill="none" stroke="rgba(128,128,128,0.18)" stroke-width="14" stroke-linecap="round" />
+              <!-- Track: explicit 240deg arc path (150deg -> 390deg), fill: none !important inline -->
+              <path class="dial-track" d="${ClimateCard._arcPath(150, 390)}" fill="none" style="fill: none !important;" stroke="rgba(128,128,128,0.18)" stroke-width="14" stroke-linecap="round" />
               <!-- Progress Arc: solid-color segments rendered by JS (no gradients / url() refs) -->
               <g id="progressGroup"></g>
               
@@ -839,7 +845,7 @@ class ClimateCard extends HTMLElement {
 
               <!-- Centered Humidity Display Below Current Temp -->
               <div class="humidity-badge" id="humidityBadge">
-                <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
                 <span id="humidityValue">55% Humidity</span>
               </div>
             </div>
@@ -865,13 +871,13 @@ class ClimateCard extends HTMLElement {
             <div class="mode-grid" id="modeGrid">
               <button class="mode-btn" data-mode="heat" title="Heat (Flame)" aria-label="Heat Mode">
                 <!-- Crisp MDI Fire Flame Icon -->
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
                   <path d="M12 2.1c-.2 0-.4.1-.5.3-1.6 2.5-3.5 4.8-4.5 7.8-1 3 0 6.2 2.2 8.3 2.2 2.1 5.4 2.5 8.1 1 2.7-1.5 4.2-4.6 3.7-7.7-.5-3.1-2.6-5.7-4.5-8.2-.3-.4-.8-.7-1.3-.7-.2 0-.4.1-.5.3-1 1.7-2 3.4-2.7 5.2-.2.5-.9.6-1.2.2-.5-.6-.9-1.3-1.3-2-.3-.5-.7-1-1.1-1.5-.3-.4-.5-1.4-.2z"/>
                 </svg>
               </button>
               <button class="mode-btn" data-mode="cool" title="Cool (Traditional Ice Crystal)" aria-label="Cool Mode">
                 <!-- Traditional 6-Axis Rotated Ice Crystal Snowflake Icon (Outward Forks, No Core Polygon) -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
                   <!-- 6 Rotated Symmetric Ice Crystal Rays with Outward-Pointing Forks -->
                   <g transform="rotate(0 12 12)">
                     <line x1="12" y1="12" x2="12" y2="2.2" />
@@ -907,7 +913,7 @@ class ClimateCard extends HTMLElement {
               </button>
               <button class="mode-btn" data-mode="off" title="Turn Off" aria-label="Turn Off">
                 <!-- Power Icon -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                   <line x1="12" y1="2" x2="12" y2="12"></line>
                 </svg>
