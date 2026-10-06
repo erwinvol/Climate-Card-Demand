@@ -16,9 +16,13 @@ const CARD_STYLES = `
 
   climate-card {
     display: block;
+    color-scheme: dark light;
+    forced-color-adjust: none;
   }
 
   .ha-climate-card {
+    color-scheme: dark light;
+    forced-color-adjust: none;
     --font-primary: 'Outfit', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     
     --bg-dark: #090d16;
@@ -78,6 +82,7 @@ const CARD_STYLES = `
   .ha-climate-card * {
     box-sizing: border-box;
     font-family: var(--font-primary);
+    forced-color-adjust: none;
   }
 
   @media (prefers-color-scheme: light) {
@@ -215,16 +220,18 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .dial-track {
-    fill: none;
-    stroke: var(--dial-track-color);
+    fill: none !important;
+    stroke: var(--dial-track-color, rgba(255, 255, 255, 0.08));
     stroke-width: 14;
     stroke-linecap: round;
+    forced-color-adjust: none;
   }
 
   .ha-climate-card .dial-progress {
-    fill: none;
+    fill: none !important;
     stroke-width: 14;
     stroke-linecap: round;
+    forced-color-adjust: none;
   }
 
   .ha-climate-card.mode-heat .dial-progress {
@@ -565,6 +572,7 @@ const CARD_STYLES = `
 class ClimateCard extends HTMLElement {
   constructor() {
     super();
+    this._gradientId = 'grad_' + Math.random().toString(36).substring(2, 9);
     this._config = {
       entity: 'climate.first_floor',
       heating_demand_entity: 'sensor.first_floor_outdoor_heat_pump_demand',
@@ -777,15 +785,15 @@ class ClimateCard extends HTMLElement {
 
           <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
-            <svg class="dial-svg" viewBox="0 0 240 240">
+            <svg class="dial-svg" viewBox="0 0 240 240" style="overflow: visible; forced-color-adjust: none;">
               <defs>
-                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#7f1d1d" />
-                  <stop offset="100%" stop-color="#ff7043" />
+                <linearGradient id="heating-gradient-${this._gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#7f1d1d" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#ff7043" stop-opacity="1" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#38bdf8" />
-                  <stop offset="100%" stop-color="#1e40af" />
+                <linearGradient id="cooling-gradient-${this._gradientId}" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38bdf8" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#1e40af" stop-opacity="1" />
                 </linearGradient>
               </defs>
               <!-- Radial Tick Marks -->
@@ -794,15 +802,15 @@ class ClimateCard extends HTMLElement {
               </g>
 
               <!-- Track (Starts at 150 deg, 240 deg upside-down horseshoe arc) -->
-              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
+              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" style="fill: none !important; forced-color-adjust: none;" />
               <!-- Progress Arc -->
-              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
+              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" style="fill: none !important; forced-color-adjust: none;" />
               
               <!-- Current Room Temp Indicator Pin -->
-              <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" fill="#ffffff" />
+              <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" fill="#ffffff" style="forced-color-adjust: none;" />
 
               <!-- Setpoint Target Handle -->
-              <circle class="dial-handle" id="dialHandle" cx="33.4" cy="170" r="14" fill="#ffffff" />
+              <circle class="dial-handle" id="dialHandle" cx="33.4" cy="170" r="14" fill="#ffffff" style="forced-color-adjust: none;" />
             </svg>
 
             <!-- Center Info -->
@@ -977,6 +985,14 @@ class ClimateCard extends HTMLElement {
       if (dialProgress) {
         dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
         dialProgress.style.strokeDashoffset = dashOffset;
+        const mode = card._stateObj.state || 'off';
+        if (mode === 'heat') {
+          dialProgress.style.stroke = `url(#heating-gradient-${card._gradientId})`;
+        } else if (mode === 'cool') {
+          dialProgress.style.stroke = `url(#cooling-gradient-${card._gradientId})`;
+        } else {
+          dialProgress.style.stroke = 'var(--mode-off-color, #78909c)';
+        }
       }
 
       const totalTicks = 28;
@@ -1283,6 +1299,13 @@ class ClimateCard extends HTMLElement {
       dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
       const dashOffset = MAX_ARC * (1 - targetPct);
       dialProgress.style.strokeDashoffset = dashOffset;
+      if (mode === 'heat') {
+        dialProgress.style.stroke = `url(#heating-gradient-${this._gradientId})`;
+      } else if (mode === 'cool') {
+        dialProgress.style.stroke = `url(#cooling-gradient-${this._gradientId})`;
+      } else {
+        dialProgress.style.stroke = 'var(--mode-off-color, #78909c)';
+      }
     }
 
     // Current Temp Pin Positioning
