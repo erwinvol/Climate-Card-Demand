@@ -215,28 +215,8 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .dial-track {
-    fill: none !important;
+    fill: none;
     stroke: var(--dial-track-color);
-    stroke-width: 14;
-    stroke-linecap: round;
-  }
-
-  .ha-climate-card .dial-progress {
-    fill: none !important;
-    stroke-width: 14;
-    stroke-linecap: round;
-  }
-
-  .ha-climate-card.mode-heat .dial-progress {
-    stroke: url(#heating-gradient);
-  }
-
-  .ha-climate-card.mode-cool .dial-progress {
-    stroke: url(#cooling-gradient);
-  }
-
-  .ha-climate-card.mode-off .dial-progress {
-    stroke: var(--mode-off-color);
   }
 
   .ha-climate-card .dial-current-pin {
@@ -562,7 +542,56 @@ const CARD_STYLES = `
   }
 `;
 
+const CLIMATE_CARD_VERSION = '2026.10.05-seg';
+console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
+
 class ClimateCard extends HTMLElement {
+  // SVG arc path along r=100 circle centred at (120,120); angles in degrees, clockwise (screen coords)
+  static _arcPath(a0, a1) {
+    const r = 100, cx = 120, cy = 120;
+    const p = (a) => {
+      const rad = (a * Math.PI) / 180;
+      return `${(cx + r * Math.cos(rad)).toFixed(2)} ${(cy + r * Math.sin(rad)).toFixed(2)}`;
+    };
+    const large = (a1 - a0) > 180 ? 1 : 0;
+    return `M ${p(a0)} A ${r} ${r} 0 ${large} 1 ${p(a1)}`;
+  }
+
+  static _lerpColor(c0, c1, t) {
+    const h = (c) => [1, 3, 5].map(i => parseInt(c.substr(i, 2), 16));
+    const a = h(c0), b = h(c1);
+    return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  }
+
+  // Heat: dark red (lowest) -> orange (highest). Cool: light blue (lowest) -> dark blue (highest).
+  static _modeColor(mode, t) {
+    if (mode === 'heat') return ClimateCard._lerpColor('#7f1d1d', '#ff7043', t);
+    if (mode === 'cool') return ClimateCard._lerpColor('#38bdf8', '#1e40af', t);
+    return '#78909c';
+  }
+
+  _renderProgress(pct, mode) {
+    const group = this.shadowRoot && this.shadowRoot.querySelector('#progressGroup');
+    if (!group) return;
+    const START = 150, SPAN = 240, SEGMENTS = 48;
+    const end = START + SPAN * pct;
+    let svg = '';
+    if (pct > 0.001) {
+      const step = SPAN / SEGMENTS;
+      for (let a = START; a < end - 0.01; a += step) {
+        const a1 = Math.min(a + step, end);
+        const t = ((a + a1) / 2 - START) / SPAN;
+        // +0.6deg overlap hides anti-aliasing seams between segments
+        const a1o = Math.min(a1 + 0.6, end);
+        svg += `<path d="${ClimateCard._arcPath(a, a1o)}" fill="none" stroke="${ClimateCard._modeColor(mode, t)}" stroke-width="14" stroke-linecap="butt" />`;
+      }
+    }
+    // Round start cap (always drawn so the arc begins at the lowest tickmark)
+    const capRad = (START * Math.PI) / 180;
+    svg += `<circle cx="${(120 + 100 * Math.cos(capRad)).toFixed(2)}" cy="${(120 + 100 * Math.sin(capRad)).toFixed(2)}" r="7" fill="${ClimateCard._modeColor(mode, 0)}" />`;
+    group.innerHTML = svg;
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -779,25 +808,15 @@ class ClimateCard extends HTMLElement {
           <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
-              <defs>
-                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#7f1d1d" />
-                  <stop offset="100%" stop-color="#ff7043" />
-                </linearGradient>
-                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stop-color="#38bdf8" />
-                  <stop offset="100%" stop-color="#1e40af" />
-                </linearGradient>
-              </defs>
               <!-- Radial Tick Marks -->
               <g class="dial-ticks-group" id="ticksGroup">
                 ${ticksHtml}
               </g>
 
-              <!-- Track (Starts at 150 deg, 240 deg upside-down horseshoe arc) -->
-              <circle class="dial-track" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
-              <!-- Progress Arc -->
-              <circle class="dial-progress" id="dialProgress" cx="120" cy="120" r="100" transform="rotate(150 120 120)" fill="none" />
+              <!-- Track: explicit 240deg arc path (150deg -> 390deg), all paint set inline -->
+              <path class="dial-track" d="${ClimateCard._arcPath(150, 390)}" fill="none" stroke="rgba(128,128,128,0.18)" stroke-width="14" stroke-linecap="round" />
+              <!-- Progress Arc: solid-color segments rendered by JS (no gradients / url() refs) -->
+              <g id="progressGroup"></g>
               
               <!-- Current Room Temp Indicator Pin -->
               <circle class="dial-current-pin" id="currentPin" cx="120" cy="120" r="4.5" fill="#ffffff" />
@@ -973,14 +992,9 @@ class ClimateCard extends HTMLElement {
         dialHandle.setAttribute('cy', handleY.toFixed(2));
       }
 
-      // Single dash arc array (418.88 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (150°) and never extends before or past bounds
-      const CIRCUMFERENCE = 628.32;
-      const MAX_ARC = 418.88;
-      const dashOffset = MAX_ARC * (1 - pct);
-      if (dialProgress) {
-        dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
-        dialProgress.style.strokeDashoffset = dashOffset;
-      }
+      // Progress arc: solid-color segments strictly between lowest (150°) and highest (390°) tickmarks
+      card._renderProgress(pct, card._stateObj.state || 'off');
+      if (dialHandle) dialHandle.setAttribute('fill', ClimateCard._modeColor(card._stateObj.state || 'off', pct));
 
       const totalTicks = 28;
       const activeTicks = Math.round(pct * totalTicks);
@@ -1280,14 +1294,11 @@ class ClimateCard extends HTMLElement {
       dialHandle.setAttribute('cy', handleY.toFixed(2));
     }
 
-    // Single dash array (418.88 MAX_ARC, 628.32 CIRCUMFERENCE) so progress arc strictly starts at lowest tickmark (150°) and never extends before or past bounds
-    const CIRCUMFERENCE = 628.32;
-    const MAX_ARC = 418.88; // 2 * PI * 100 * (240 / 360) = 418.88
-    if (dialProgress) {
-      dialProgress.style.strokeDasharray = `${MAX_ARC} ${CIRCUMFERENCE}`;
-      const dashOffset = MAX_ARC * (1 - targetPct);
-      dialProgress.style.strokeDashoffset = dashOffset;
-    }
+    // Progress arc: solid-color segments strictly between lowest (150°) and highest (390°) tickmarks
+    this._renderProgress(targetPct, mode);
+
+    // Handle / pin fill set as attributes so they never depend on CSS paint resolution
+    if (dialHandle) dialHandle.setAttribute('fill', ClimateCard._modeColor(mode, targetPct));
 
     // Current Temp Pin Positioning
     let currentPct = 0.5;
