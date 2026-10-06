@@ -548,7 +548,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.05-v3';
+const CLIMATE_CARD_VERSION = '2026.10.05-v4';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -833,42 +833,42 @@ class ClimateCard extends HTMLElement {
             </svg>
 
             <!-- Center Info -->
-            <div class="dial-center-info">
+            <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px;">
               <span class="current-temp-label" id="modeSublabel">TARGET TEMP</span>
-              <div class="target-temp-display">
+              <div class="target-temp-display" style="display: flex; align-items: flex-start; justify-content: center; line-height: 1; margin: 3px 0;">
                 <span class="target-temp-value" id="targetTempValue">16</span>
                 <span class="target-temp-unit" id="tempUnit">°C</span>
               </div>
-              <div class="room-temp-badge">
+              <div class="room-temp-badge" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.82rem; padding: 0.18rem 0.55rem; border-radius: 12px;">
                 Current: <strong id="currentTempValue">21.6°C</strong>
               </div>
 
               <!-- Centered Humidity Display Below Current Temp -->
-              <div class="humidity-badge" id="humidityBadge">
-                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/></svg>
+              <div class="humidity-badge" id="humidityBadge" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; padding: 0.15rem 0.55rem; border-radius: 10px; margin-top: 1px;">
+                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px; max-width: 12px; max-height: 12px; display: inline-block; fill: currentColor;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor"/></svg>
                 <span id="humidityValue">55% Humidity</span>
               </div>
             </div>
 
             <!-- Fine Adjust Buttons (- / +) Tucked into Bottom Left / Bottom Right Low & High Break Points -->
-            <button class="btn-adjust btn-minus" id="btnMinus" aria-label="Decrease Temperature">−</button>
-            <button class="btn-adjust btn-plus" id="btnPlus" aria-label="Increase Temperature">+</button>
+            <button class="btn-adjust btn-minus" id="btnMinus" aria-label="Decrease Temperature" style="position: absolute; bottom: -6px; left: 18px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">−</button>
+            <button class="btn-adjust btn-plus" id="btnPlus" aria-label="Increase Temperature" style="position: absolute; bottom: -6px; right: 18px; width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: auto;">+</button>
           </div>
 
           <!-- Dynamic Mode-Based Outdoor Demand Gauge Meter -->
           <div class="heatpump-demand-container" id="heatpumpDemandSection">
-            <div class="demand-meter-header">
+            <div class="demand-meter-header" style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem;">
               <span class="demand-meter-label" id="demandMeterLabel">Outdoor Heating Demand</span>
               <span class="demand-meter-val" id="heatpumpDemandVal">0%</span>
             </div>
-            <div class="demand-meter-track">
-              <div class="demand-meter-fill" id="heatpumpDemandFill" style="width: 0%;"></div>
+            <div class="demand-meter-track" style="width: 100%; height: 6px; border-radius: 3px; overflow: hidden;">
+              <div class="demand-meter-fill" id="heatpumpDemandFill" style="width: 0%; height: 100%; border-radius: 3px;"></div>
             </div>
           </div>
 
           <!-- HVAC Mode Buttons Grid (Without 'HVAC Mode' header text label) -->
           <div class="controls-section">
-            <div class="mode-grid" id="modeGrid">
+            <div class="mode-grid" id="modeGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.65rem;">
               <button class="mode-btn" data-mode="heat" title="Heat (Flame)" aria-label="Heat Mode">
                 <!-- Crisp MDI Fire Flame Icon -->
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
