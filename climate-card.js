@@ -565,6 +565,7 @@ const CARD_STYLES = `
 class ClimateCard extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: 'open' });
     this._config = {
       entity: 'climate.first_floor',
       heating_demand_entity: 'sensor.first_floor_outdoor_heat_pump_demand',
@@ -638,7 +639,7 @@ class ClimateCard extends HTMLElement {
       cooling_demand_entity: config.cooling_demand_entity || 'sensor.first_floor_outdoor_cooling_demand',
       ...config
     };
-    if (this.querySelector('#cardContainer')) {
+    if (this.shadowRoot && this.shadowRoot.querySelector('#cardContainer')) {
       this.updateUI();
     } else {
       this._renderCardSkeleton();
@@ -663,7 +664,7 @@ class ClimateCard extends HTMLElement {
       if (this._isPendingTempChange) {
         if (incomingTemp === this._pendingTargetTemp) {
           this._isPendingTempChange = false;
-          const targetTempDisplay = this.querySelector('.target-temp-display');
+          const targetTempDisplay = this.shadowRoot ? this.shadowRoot.querySelector('.target-temp-display') : null;
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
         } else {
           // Keep showing pending target temp until Home Assistant state is updated
@@ -736,7 +737,7 @@ class ClimateCard extends HTMLElement {
   }
 
   connectedCallback() {
-    if (!this.querySelector('.ha-climate-card')) {
+    if (!this.shadowRoot.querySelector('.ha-climate-card')) {
       this._renderCardSkeleton();
     }
     this.updateUI();
@@ -758,7 +759,7 @@ class ClimateCard extends HTMLElement {
       ticksHtml += `<line class="dial-tick" data-index="${i}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" />`;
     }
 
-    this.innerHTML = `
+    this.shadowRoot.innerHTML = `
       <style>${CARD_STYLES}</style>
       <div class="ha-climate-card" id="cardContainer">
         <div class="card-content">
@@ -779,11 +780,11 @@ class ClimateCard extends HTMLElement {
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="20" y1="120" x2="220" y2="120">
+                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#7f1d1d" />
                   <stop offset="100%" stop-color="#ff7043" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="20" y1="120" x2="220" y2="120">
+                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#38bdf8" />
                   <stop offset="100%" stop-color="#1e40af" />
                 </linearGradient>
@@ -903,10 +904,12 @@ class ClimateCard extends HTMLElement {
 
   _bindEvents() {
     const card = this;
+    const root = this.shadowRoot;
+    if (!root) return;
     
     // Plus / Minus Buttons
-    const btnPlus = this.querySelector('#btnPlus');
-    const btnMinus = this.querySelector('#btnMinus');
+    const btnPlus = root.querySelector('#btnPlus');
+    const btnMinus = root.querySelector('#btnMinus');
     if (btnPlus) {
       btnPlus.addEventListener('pointerdown', (e) => e.stopPropagation());
       btnPlus.addEventListener('click', (e) => {
@@ -923,7 +926,7 @@ class ClimateCard extends HTMLElement {
     }
 
     // Mode Buttons
-    const modeBtns = this.querySelectorAll('.mode-btn');
+    const modeBtns = root.querySelectorAll('.mode-btn');
     modeBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-mode');
@@ -932,11 +935,11 @@ class ClimateCard extends HTMLElement {
     });
 
     // Circular Dial Pointer Events
-    const dialContainer = this.querySelector('#dialContainer');
-    const dialHandle = this.querySelector('#dialHandle');
-    const dialProgress = this.querySelector('#dialProgress');
-    const targetTempEl = this.querySelector('#targetTempValue');
-    const tickEls = this.querySelectorAll('.dial-tick');
+    const dialContainer = root.querySelector('#dialContainer');
+    const dialHandle = root.querySelector('#dialHandle');
+    const dialProgress = root.querySelector('#dialProgress');
+    const targetTempEl = root.querySelector('#targetTempValue');
+    const tickEls = root.querySelectorAll('.dial-tick');
     
     if (!dialContainer) return;
 
@@ -1075,8 +1078,8 @@ class ClimateCard extends HTMLElement {
     this._isPendingTempChange = true;
 
     // Show immediate target readout with pending pulse animation
-    const targetTempEl = this.querySelector('#targetTempValue');
-    const targetTempDisplay = this.querySelector('.target-temp-display');
+    const targetTempEl = this.shadowRoot.querySelector('#targetTempValue');
+    const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');
     if (targetTempEl) targetTempEl.innerText = targetTemp;
     if (targetTempDisplay) targetTempDisplay.classList.add('pending');
 
@@ -1134,7 +1137,7 @@ class ClimateCard extends HTMLElement {
       this._pendingTimeoutTimer = setTimeout(() => {
         if (!controller.cancelled && this._isPendingTempChange) {
           this._isPendingTempChange = false;
-          const targetTempDisplay = this.querySelector('.target-temp-display');
+          const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');
           if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
           if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
             const currentEntity = this._hass.states[this._config.entity];
@@ -1147,7 +1150,7 @@ class ClimateCard extends HTMLElement {
       }, 12000);
     } else {
       this._isPendingTempChange = false;
-      const targetTempDisplay = this.querySelector('.target-temp-display');
+      const targetTempDisplay = this.shadowRoot.querySelector('.target-temp-display');
       if (targetTempDisplay) targetTempDisplay.classList.remove('pending');
       // Revert display back to actual Home Assistant entity temperature on error
       if (this._hass && this._config.entity && this._hass.states[this._config.entity]) {
@@ -1179,26 +1182,27 @@ class ClimateCard extends HTMLElement {
   }
 
   updateUI() {
-    if (!this.querySelector('#cardContainer')) {
+    if (!this.shadowRoot || !this.shadowRoot.querySelector('#cardContainer')) {
       this._renderCardSkeleton();
     }
 
-    const cardContainer = this.querySelector('#cardContainer');
-    const friendlyNameEl = this.querySelector('#friendlyName');
-    const demandBadge = this.querySelector('#demandBadge');
-    const demandText = this.querySelector('#demandText');
-    const targetTempEl = this.querySelector('#targetTempValue');
-    const tempUnitEl = this.querySelector('#tempUnit');
-    const currentTempEl = this.querySelector('#currentTempValue');
-    const humidityBadge = this.querySelector('#humidityBadge');
-    const humidityValueEl = this.querySelector('#humidityValue');
-    const dialHandle = this.querySelector('#dialHandle');
-    const dialProgress = this.querySelector('#dialProgress');
-    const currentPin = this.querySelector('#currentPin');
-    const tickEls = this.querySelectorAll('.dial-tick');
-    const demandMeterLabel = this.querySelector('#demandMeterLabel');
-    const heatpumpDemandVal = this.querySelector('#heatpumpDemandVal');
-    const heatpumpDemandFill = this.querySelector('#heatpumpDemandFill');
+    const root = this.shadowRoot;
+    const cardContainer = root.querySelector('#cardContainer');
+    const friendlyNameEl = root.querySelector('#friendlyName');
+    const demandBadge = root.querySelector('#demandBadge');
+    const demandText = root.querySelector('#demandText');
+    const targetTempEl = root.querySelector('#targetTempValue');
+    const tempUnitEl = root.querySelector('#tempUnit');
+    const currentTempEl = root.querySelector('#currentTempValue');
+    const humidityBadge = root.querySelector('#humidityBadge');
+    const humidityValueEl = root.querySelector('#humidityValue');
+    const dialHandle = root.querySelector('#dialHandle');
+    const dialProgress = root.querySelector('#dialProgress');
+    const currentPin = root.querySelector('#currentPin');
+    const tickEls = root.querySelectorAll('.dial-tick');
+    const demandMeterLabel = root.querySelector('#demandMeterLabel');
+    const heatpumpDemandVal = root.querySelector('#heatpumpDemandVal');
+    const heatpumpDemandFill = root.querySelector('#heatpumpDemandFill');
 
     if (!cardContainer) return;
 
@@ -1335,7 +1339,7 @@ class ClimateCard extends HTMLElement {
     if (heatpumpDemandFill) heatpumpDemandFill.style.width = `${Math.min(100, Math.max(0, activeDemand))}%`;
 
     // 9. Active Mode Button Highlight
-    const modeBtns = this.querySelectorAll('.mode-btn');
+    const modeBtns = root.querySelectorAll('.mode-btn');
     modeBtns.forEach(btn => {
       const btnMode = btn.getAttribute('data-mode');
       if (btnMode === mode) {
@@ -1358,6 +1362,7 @@ if (!customElements.get('climate-card')) {
 class ClimateCardEditor extends HTMLElement {
   constructor() {
     super();
+    this.attachShadow({ mode: 'open' });
     this._config = {};
     this._hass = null;
   }
@@ -1402,7 +1407,7 @@ class ClimateCardEditor extends HTMLElement {
       return html;
     };
 
-    this.innerHTML = `
+    this.shadowRoot.innerHTML = `
       <style>
         .climate-card-editor {
           display: flex;
@@ -1495,13 +1500,15 @@ class ClimateCardEditor extends HTMLElement {
   }
 
   _attachListeners() {
-    const titleInput = this.querySelector('#editorTitleInput');
-    const entityInput = this.querySelector('#editorEntityInput');
-    const entitySelect = this.querySelector('#editorEntitySelect');
-    const heatingInput = this.querySelector('#editorHeatingInput');
-    const heatingSelect = this.querySelector('#editorHeatingSelect');
-    const coolingInput = this.querySelector('#editorCoolingInput');
-    const coolingSelect = this.querySelector('#editorCoolingSelect');
+    const root = this.shadowRoot;
+    if (!root) return;
+    const titleInput = root.querySelector('#editorTitleInput');
+    const entityInput = root.querySelector('#editorEntityInput');
+    const entitySelect = root.querySelector('#editorEntitySelect');
+    const heatingInput = root.querySelector('#editorHeatingInput');
+    const heatingSelect = root.querySelector('#editorHeatingSelect');
+    const coolingInput = root.querySelector('#editorCoolingInput');
+    const coolingSelect = root.querySelector('#editorCoolingSelect');
 
     const updateConfig = (key, val) => {
       this._config = {
