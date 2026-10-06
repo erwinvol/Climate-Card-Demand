@@ -215,14 +215,14 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .dial-track {
-    fill: none;
+    fill: none !important;
     stroke: var(--dial-track-color);
     stroke-width: 14;
     stroke-linecap: round;
   }
 
   .ha-climate-card .dial-progress {
-    fill: none;
+    fill: none !important;
     stroke-width: 14;
     stroke-linecap: round;
   }
@@ -775,15 +775,15 @@ class ClimateCard extends HTMLElement {
             </div>
           </div>
 
-          <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arch) -->
+          <!-- Thermostat Circular Dial (Upside-Down Horseshoe Arc) -->
           <div class="dial-container" id="dialContainer">
             <svg class="dial-svg" viewBox="0 0 240 240">
               <defs>
-                <linearGradient id="heating-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="heating-gradient" gradientUnits="userSpaceOnUse" x1="20" y1="120" x2="220" y2="120">
                   <stop offset="0%" stop-color="#7f1d1d" />
                   <stop offset="100%" stop-color="#ff7043" />
                 </linearGradient>
-                <linearGradient id="cooling-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="cooling-gradient" gradientUnits="userSpaceOnUse" x1="20" y1="120" x2="220" y2="120">
                   <stop offset="0%" stop-color="#38bdf8" />
                   <stop offset="100%" stop-color="#1e40af" />
                 </linearGradient>

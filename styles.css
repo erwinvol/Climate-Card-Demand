@@ -293,14 +293,14 @@ body {
 
 /* Circular Track & Progress Arc */
 .dial-track {
-  fill: none;
+  fill: none !important;
   stroke: var(--dial-track-color);
   stroke-width: 14;
   stroke-linecap: round;
 }
 
 .dial-progress {
-  fill: none;
+  fill: none !important;
   stroke-width: 14;
   stroke-linecap: round;
 }
