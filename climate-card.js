@@ -798,6 +798,7 @@ class ClimateCard extends HTMLElement {
             <div class="entity-info">
               <div class="entity-name" id="friendlyName">First Floor Thermostat</div>
             </div>
+
             <!-- System Status Badge -->
             <div class="demand-badge" id="demandBadge">
               <span class="demand-dot"></span>
