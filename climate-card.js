@@ -287,6 +287,7 @@ const CARD_STYLES = `
     text-align: center;
     pointer-events: none;
     gap: 3px;
+    padding-top: 14px;
   }
 
   .ha-climate-card .current-temp-label {
@@ -295,6 +296,7 @@ const CARD_STYLES = `
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-muted);
+    margin-top: 10px;
   }
 
   .ha-climate-card .target-temp-display {
@@ -358,20 +360,26 @@ const CARD_STYLES = `
   .ha-climate-card .humidity-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 0.78rem;
-    font-weight: 500;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #bae6fd;
+    background: rgba(14, 165, 233, 0.22);
+    padding: 0.2rem 0.65rem;
+    border-radius: 12px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    margin-top: 3px;
+  }
+
+  .ha-climate-card.theme-light .humidity-badge {
     color: #0284c7;
-    background: rgba(2, 132, 199, 0.1);
-    padding: 0.15rem 0.55rem;
-    border-radius: 10px;
-    border: 1px solid rgba(2, 132, 199, 0.2);
-    margin-top: 1px;
+    background: rgba(2, 132, 199, 0.12);
+    border-color: rgba(2, 132, 199, 0.3);
   }
 
   .ha-climate-card .humidity-badge svg {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     fill: currentColor;
   }
 
@@ -564,7 +572,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v6';
+const CLIMATE_CARD_VERSION = '2026.10.06-v7';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -866,14 +874,14 @@ class ClimateCard extends HTMLElement {
             </svg>
 
             <!-- Center Info -->
-            <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px;">
+            <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px; padding-top: 14px;">
               <!-- System Status Badge Above Target Temp -->
               <div class="demand-badge" id="demandBadge" style="margin-bottom: 2px;">
                 <span class="demand-dot"></span>
                 <span id="demandText">IDLE</span>
               </div>
 
-              <span class="current-temp-label" id="modeSublabel">TARGET TEMP</span>
+              <span class="current-temp-label" id="modeSublabel" style="margin-top: 10px;">TARGET TEMP</span>
               <div class="target-temp-display" style="display: flex; align-items: flex-start; justify-content: center; line-height: 1; margin: 3px 0;">
                 <span class="target-temp-value" id="targetTempValue">16</span>
                 <span class="target-temp-unit" id="tempUnit">°C</span>
@@ -883,8 +891,8 @@ class ClimateCard extends HTMLElement {
               </div>
 
               <!-- Centered Humidity Display Below Current Temp -->
-              <div class="humidity-badge" id="humidityBadge" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; padding: 0.15rem 0.55rem; border-radius: 10px; margin-top: 1px;">
-                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px; max-width: 12px; max-height: 12px; display: inline-block; fill: currentColor;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor"/></svg>
+              <div class="humidity-badge" id="humidityBadge">
+                <svg viewBox="0 0 24 24" width="13" height="13" style="width: 13px; height: 13px; max-width: 13px; max-height: 13px; display: inline-block; fill: currentColor;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor"/></svg>
                 <span id="humidityValue">55% Humidity</span>
               </div>
             </div>
