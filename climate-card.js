@@ -9,6 +9,7 @@
  * - Verified temperature setpoint change with graceful error handling and retry cap
  * - Slider progress arc strictly clamped between lowest tickmark (150°) and highest tickmark (390°)
  * - Dynamic theme detection supporting Home Assistant darkMode, prefers-color-scheme media queries, and data-theme attributes
+ * - Non-destructive Card Editor lifecycle preventing dropdown menu closure on WebSocket state updates
  */
 
 const CARD_STYLES = `
@@ -572,7 +573,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v7';
+const CLIMATE_CARD_VERSION = '2026.10.06-v8';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -1462,20 +1463,66 @@ class ClimateCardEditor extends HTMLElement {
     this.attachShadow({ mode: 'open' });
     this._config = {};
     this._hass = null;
+    this._rendered = false;
   }
 
   setConfig(config) {
     this._config = { ...config };
-    this.render();
+    if (!this._rendered) {
+      this.render();
+    }
   }
 
   set hass(hass) {
     this._hass = hass;
-    this.render();
+    if (!this._rendered) {
+      this.render();
+    } else {
+      this._updateSelectOptions();
+    }
+  }
+
+  _updateSelectOptions() {
+    if (!this._hass || !this._hass.states || !this.shadowRoot) return;
+    
+    // Prevent DOM updates while user is interacting with any editor input or dropdown
+    const activeEl = this.shadowRoot.activeElement;
+    if (activeEl) return;
+
+    const climateOptions = Object.keys(this._hass.states)
+      .filter(id => id.startsWith('climate.'))
+      .sort();
+    const sensorOptions = Object.keys(this._hass.states)
+      .filter(id => id.startsWith('sensor.'))
+      .sort();
+
+    const entitySelect = this.shadowRoot.querySelector('#editorEntitySelect');
+    const heatingSelect = this.shadowRoot.querySelector('#editorHeatingSelect');
+    const coolingSelect = this.shadowRoot.querySelector('#editorCoolingSelect');
+
+    const refreshSelect = (selectEl, options, currentVal) => {
+      if (!selectEl) return;
+      const currentSelected = selectEl.value || currentVal;
+      let html = '<option value="">-- Select entity from Home Assistant --</option>';
+      options.forEach(id => {
+        const friendlyName = (this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
+        const isSelected = id === currentSelected ? 'selected' : '';
+        html += `<option value="${id}" ${isSelected}>${friendlyName} (${id})</option>`;
+      });
+      if (selectEl.innerHTML !== html) {
+        selectEl.innerHTML = html;
+        selectEl.value = currentSelected;
+      }
+    };
+
+    refreshSelect(entitySelect, climateOptions, this._config.entity);
+    refreshSelect(heatingSelect, sensorOptions, this._config.heating_demand_entity);
+    refreshSelect(coolingSelect, sensorOptions, this._config.cooling_demand_entity);
   }
 
   render() {
     if (!this._config) return;
+    this._rendered = true;
 
     const title = this._config.title !== undefined ? this._config.title : (this._config.name || '');
     const entity = this._config.entity || '';
