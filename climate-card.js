@@ -8,7 +8,7 @@
  * - Mode-based active demand gauge and thermostat circular slider
  * - Verified temperature setpoint change with graceful error handling and retry cap
  * - Slider progress arc strictly clamped between lowest tickmark (150°) and highest tickmark (390°)
- * - Embedded CSS styles for standalone Home Assistant rendering
+ * - Dynamic theme detection supporting Home Assistant darkMode, prefers-color-scheme media queries, and data-theme attributes
  */
 
 const CARD_STYLES = `
@@ -78,23 +78,39 @@ const CARD_STYLES = `
     font-family: var(--font-primary);
   }
 
-  @media (prefers-color-scheme: light) {
-    .ha-climate-card {
-      --bg-dark: #f1f5f9;
-      --card-bg: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.95)));
-      --card-border: var(--ha-card-border-color, rgba(0, 0, 0, 0.08));
-      --card-shadow: var(--ha-card-box-shadow, 0 16px 40px rgba(0, 0, 0, 0.08));
+  .ha-climate-card.theme-dark,
+  .ha-climate-card {
+    --bg-dark: #090d16;
+    --card-bg: var(--ha-card-background, var(--card-background-color, rgba(20, 27, 44, 0.88)));
+    --card-border: var(--ha-card-border-color, rgba(255, 255, 255, 0.08));
+    --card-shadow: var(--ha-card-box-shadow, 0 16px 45px rgba(0, 0, 0, 0.45));
+    
+    --text-primary: var(--primary-text-color, #f8fafc);
+    --text-secondary: var(--secondary-text-color, #94a3b8);
+    --text-muted: var(--disabled-text-color, #64748b);
 
-      --text-primary: var(--primary-text-color, #0f172a);
-      --text-secondary: var(--secondary-text-color, #475569);
-      --text-muted: var(--disabled-text-color, #94a3b8);
+    --btn-adjust-bg: rgba(255, 255, 255, 0.06);
+    --btn-adjust-border: rgba(255, 255, 255, 0.12);
+    --dial-track-color: rgba(255, 255, 255, 0.06);
+    --dial-tick-color: rgba(255, 255, 255, 0.12);
+    --demand-bg: rgba(0, 0, 0, 0.2);
+  }
 
-      --btn-adjust-bg: rgba(0, 0, 0, 0.05);
-      --btn-adjust-border: rgba(0, 0, 0, 0.1);
-      --dial-track-color: rgba(0, 0, 0, 0.07);
-      --dial-tick-color: rgba(0, 0, 0, 0.15);
-      --demand-bg: rgba(0, 0, 0, 0.04);
-    }
+  .ha-climate-card.theme-light {
+    --bg-dark: #f1f5f9;
+    --card-bg: var(--ha-card-background, var(--card-background-color, rgba(255, 255, 255, 0.95)));
+    --card-border: var(--ha-card-border-color, rgba(0, 0, 0, 0.08));
+    --card-shadow: var(--ha-card-box-shadow, 0 16px 40px rgba(0, 0, 0, 0.08));
+
+    --text-primary: var(--primary-text-color, #0f172a);
+    --text-secondary: var(--secondary-text-color, #475569);
+    --text-muted: var(--disabled-text-color, #94a3b8);
+
+    --btn-adjust-bg: rgba(0, 0, 0, 0.05);
+    --btn-adjust-border: rgba(0, 0, 0, 0.1);
+    --dial-track-color: rgba(0, 0, 0, 0.07);
+    --dial-tick-color: rgba(0, 0, 0, 0.15);
+    --demand-bg: rgba(0, 0, 0, 0.04);
   }
 
   .ha-climate-card.mode-heat {
@@ -548,7 +564,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v5';
+const CLIMATE_CARD_VERSION = '2026.10.06-v6';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -612,6 +628,7 @@ class ClimateCard extends HTMLElement {
     this._isPendingTempChange = false;
     this._pendingTargetTemp = null;
     this._activeRetryController = null;
+    this._themeObserver = null;
     
     // Default fallback state matched to live Home Assistant entities
     this._stateObj = {
@@ -775,7 +792,29 @@ class ClimateCard extends HTMLElement {
     if (!this.shadowRoot.querySelector('.ha-climate-card')) {
       this._renderCardSkeleton();
     }
+
+    if (window.matchMedia) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      if (mediaQuery.addEventListener) {
+        mediaQuery.addEventListener('change', () => this.updateUI());
+      } else if (mediaQuery.addListener) {
+        mediaQuery.addListener(() => this.updateUI());
+      }
+    }
+
+    if (window.MutationObserver && document.documentElement) {
+      this._themeObserver = new MutationObserver(() => this.updateUI());
+      this._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+    }
+
     this.updateUI();
+  }
+
+  disconnectedCallback() {
+    if (this._themeObserver) {
+      this._themeObserver.disconnect();
+      this._themeObserver = null;
+    }
   }
 
   _renderCardSkeleton() {
@@ -1245,8 +1284,27 @@ class ClimateCard extends HTMLElement {
     const mode = stateObj.state || 'off';
     const unit = attrs.unit_of_measurement || '°C';
 
-    // 1. Theme class on main container
-    cardContainer.className = `ha-climate-card mode-${mode}`;
+    // 1. Dynamic Theme & Mode class assignment
+    let isDark = false;
+    const docAttr = document.documentElement.getAttribute('data-theme') || document.body.getAttribute('data-theme');
+    if (docAttr === 'dark') {
+      isDark = true;
+    } else if (docAttr === 'light') {
+      isDark = false;
+    } else if (this._hass) {
+      if (this._hass.darkMode !== undefined) {
+        isDark = this._hass.darkMode;
+      } else if (this._hass.themes && this._hass.themes.darkMode !== undefined) {
+        isDark = this._hass.themes.darkMode;
+      } else {
+        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+    } else {
+      isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    const themeClass = isDark ? 'theme-dark' : 'theme-light';
+    cardContainer.className = `ha-climate-card mode-${mode} ${themeClass}`;
 
     // 2. Friendly Name / Title
     const displayName = (this._config.title !== undefined && this._config.title !== '') 
