@@ -10,6 +10,7 @@
  * - Slider progress arc strictly clamped between lowest tickmark (150°) and highest tickmark (390°)
  * - Dynamic theme detection supporting Home Assistant darkMode, prefers-color-scheme media queries, and data-theme attributes
  * - Non-destructive Card Editor lifecycle preventing dropdown menu closure on WebSocket state updates
+ * - Thermostat entity friendly_name used as default card title with optional custom title override
  */
 
 const CARD_STYLES = `
@@ -573,7 +574,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v8';
+const CLIMATE_CARD_VERSION = '2026.10.06-v9';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -682,7 +683,6 @@ class ClimateCard extends HTMLElement {
 
   static getStubConfig() {
     return {
-      title: 'First Floor Thermostat',
       entity: 'climate.first_floor',
       heating_demand_entity: 'sensor.first_floor_outdoor_heat_pump_demand',
       cooling_demand_entity: 'sensor.first_floor_outdoor_cooling_demand'
@@ -694,7 +694,6 @@ class ClimateCard extends HTMLElement {
       throw new Error('Invalid configuration');
     }
     this._config = {
-      title: config.title !== undefined ? config.title : (config.name !== undefined ? config.name : 'First Floor Thermostat'),
       entity: config.entity || 'climate.first_floor',
       heating_demand_entity: config.heating_demand_entity || 'sensor.first_floor_outdoor_heat_pump_demand',
       cooling_demand_entity: config.cooling_demand_entity || 'sensor.first_floor_outdoor_cooling_demand',
@@ -1315,12 +1314,15 @@ class ClimateCard extends HTMLElement {
     const themeClass = isDark ? 'theme-dark' : 'theme-light';
     cardContainer.className = `ha-climate-card mode-${mode} ${themeClass}`;
 
-    // 2. Friendly Name / Title
-    const displayName = (this._config.title !== undefined && this._config.title !== '') 
-      ? this._config.title 
-      : ((this._config.name !== undefined && this._config.name !== '') 
-        ? this._config.name 
-        : (attrs.friendly_name || 'Thermostat'));
+    // 2. Friendly Name / Title: Default to thermostat entity name unless custom title is set
+    const entityFriendlyName = (attrs && attrs.friendly_name) ? attrs.friendly_name : 'Thermostat';
+    const hasCustomTitle = (this._config.title !== undefined && this._config.title !== null && this._config.title.trim() !== '')
+      || (this._config.name !== undefined && this._config.name !== null && this._config.name.trim() !== '');
+    
+    const displayName = hasCustomTitle
+      ? (this._config.title !== undefined && this._config.title !== null && this._config.title.trim() !== '' ? this._config.title : this._config.name)
+      : entityFriendlyName;
+
     if (friendlyNameEl) friendlyNameEl.innerText = displayName;
 
     // 3. Status Badge & HVAC Action
@@ -1529,6 +1531,14 @@ class ClimateCardEditor extends HTMLElement {
     const heatingEntity = this._config.heating_demand_entity || '';
     const coolingEntity = this._config.cooling_demand_entity || '';
 
+    let defaultTitlePlaceholder = 'Leave blank to use entity name';
+    if (this._hass && entity && this._hass.states[entity]) {
+      const entityObj = this._hass.states[entity];
+      if (entityObj.attributes && entityObj.attributes.friendly_name) {
+        defaultTitlePlaceholder = `Default: ${entityObj.attributes.friendly_name}`;
+      }
+    }
+
     let climateOptions = [];
     let sensorOptions = [];
 
@@ -1601,8 +1611,8 @@ class ClimateCardEditor extends HTMLElement {
       <div class="climate-card-editor">
         <div class="editor-row">
           <label class="editor-label" for="editorTitleInput">Card Title</label>
-          <input type="text" class="editor-input" id="editorTitleInput" value="${title}" placeholder="First Floor Thermostat" />
-          <span class="editor-hint">Custom header text displayed on top of the card</span>
+          <input type="text" class="editor-input" id="editorTitleInput" value="${title}" placeholder="${defaultTitlePlaceholder}" />
+          <span class="editor-hint">Custom header title (leave blank to use entity friendly name by default)</span>
         </div>
 
         <div class="editor-row">
