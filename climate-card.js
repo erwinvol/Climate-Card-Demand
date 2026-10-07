@@ -8,9 +8,7 @@
  * - Mode-based active demand gauge and thermostat circular slider
  * - Verified temperature setpoint change with graceful error handling and retry cap
  * - Slider progress arc strictly clamped between lowest tickmark (150°) and highest tickmark (390°)
- * - Dynamic theme detection supporting Home Assistant darkMode, prefers-color-scheme media queries, and data-theme attributes
- * - Non-destructive Card Editor lifecycle preventing dropdown menu closure on WebSocket state updates
- * - Thermostat entity friendly_name used as default card title with optional custom title override
+ * - Embedded CSS styles for standalone Home Assistant rendering
  */
 
 const CARD_STYLES = `
@@ -574,7 +572,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v9';
+const CLIMATE_CARD_VERSION = '2026.10.06-v10';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -638,7 +636,6 @@ class ClimateCard extends HTMLElement {
     this._isPendingTempChange = false;
     this._pendingTargetTemp = null;
     this._activeRetryController = null;
-    this._themeObserver = null;
     
     // Default fallback state matched to live Home Assistant entities
     this._stateObj = {
@@ -874,14 +871,14 @@ class ClimateCard extends HTMLElement {
             </svg>
 
             <!-- Center Info -->
-            <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px; padding-top: 14px;">
+            <div class="dial-center-info" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; gap: 3px;">
               <!-- System Status Badge Above Target Temp -->
               <div class="demand-badge" id="demandBadge" style="margin-bottom: 2px;">
                 <span class="demand-dot"></span>
                 <span id="demandText">IDLE</span>
               </div>
 
-              <span class="current-temp-label" id="modeSublabel" style="margin-top: 10px;">TARGET TEMP</span>
+              <span class="current-temp-label" id="modeSublabel">TARGET TEMP</span>
               <div class="target-temp-display" style="display: flex; align-items: flex-start; justify-content: center; line-height: 1; margin: 3px 0;">
                 <span class="target-temp-value" id="targetTempValue">16</span>
                 <span class="target-temp-unit" id="tempUnit">°C</span>
@@ -891,8 +888,8 @@ class ClimateCard extends HTMLElement {
               </div>
 
               <!-- Centered Humidity Display Below Current Temp -->
-              <div class="humidity-badge" id="humidityBadge">
-                <svg viewBox="0 0 24 24" width="13" height="13" style="width: 13px; height: 13px; max-width: 13px; max-height: 13px; display: inline-block; fill: currentColor;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor"/></svg>
+              <div class="humidity-badge" id="humidityBadge" style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; padding: 0.15rem 0.55rem; border-radius: 10px; margin-top: 1px;">
+                <svg viewBox="0 0 24 24" width="12" height="12" style="width: 12px; height: 12px; max-width: 12px; max-height: 12px; display: inline-block; fill: currentColor;"><path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" fill="currentColor"/></svg>
                 <span id="humidityValue">55% Humidity</span>
               </div>
             </div>
@@ -1484,6 +1481,88 @@ class ClimateCardEditor extends HTMLElement {
     }
   }
 
+  _getFilteredSensorOptions(thermostatEntityId) {
+    if (!this._hass || !this._hass.states) return [];
+
+    const allSensors = Object.keys(this._hass.states)
+      .filter(id => id.startsWith('sensor.'))
+      .sort();
+
+    if (!thermostatEntityId || !this._hass.states[thermostatEntityId]) {
+      return allSensors;
+    }
+
+    const climateObj = this._hass.states[thermostatEntityId];
+    const friendlyName = (climateObj && climateObj.attributes && climateObj.attributes.friendly_name) || '';
+
+    // 1. Check HA Entity Registry & Device Registry match if available
+    let climateDeviceId = null;
+    if (this._hass.entities && this._hass.entities[thermostatEntityId]) {
+      climateDeviceId = this._hass.entities[thermostatEntityId].device_id;
+    }
+
+    let deviceName = '';
+    if (climateDeviceId && this._hass.devices && this._hass.devices[climateDeviceId]) {
+      const dev = this._hass.devices[climateDeviceId];
+      deviceName = (dev.name_by_user || dev.name || '').toLowerCase();
+    }
+
+    // 2. Extract base search terms (slug and cleaned friendly name)
+    const slug = thermostatEntityId.replace('climate.', '').toLowerCase();
+    const slugCleaned = slug
+      .replace(/_(thermostat|climate|hvac|control|unit|system)$/i, '')
+      .replace(/^(thermostat|climate|hvac|control|unit|system)_/i, '');
+
+    const nameCleaned = friendlyName.toLowerCase()
+      .replace(/\b(thermostat|climate|hvac|control|unit|system)\b/gi, '')
+      .trim();
+
+    const keywords = nameCleaned
+      .split(/[\s_\-]+/)
+      .filter(w => w.length >= 2);
+
+    const filtered = allSensors.filter(sensorId => {
+      // Check HA Device Registry ID match
+      if (climateDeviceId && this._hass.entities && this._hass.entities[sensorId]) {
+        if (this._hass.entities[sensorId].device_id === climateDeviceId) {
+          return true;
+        }
+      }
+
+      const sensorObj = this._hass.states[sensorId];
+      const sensorFriendly = (sensorObj && sensorObj.attributes && sensorObj.attributes.friendly_name)
+        ? sensorObj.attributes.friendly_name.toLowerCase()
+        : '';
+      const sensorIdLower = sensorId.toLowerCase();
+
+      // Check device name match
+      if (deviceName && (sensorIdLower.includes(deviceName) || sensorFriendly.includes(deviceName))) {
+        return true;
+      }
+
+      // Check slug match
+      if (slugCleaned && (sensorIdLower.includes(slugCleaned) || sensorFriendly.includes(slugCleaned))) {
+        return true;
+      }
+      if (slug && (sensorIdLower.includes(slug) || sensorFriendly.includes(slug))) {
+        return true;
+      }
+
+      // Check keyword token match
+      if (keywords.length > 0) {
+        const matchesAllKeywords = keywords.every(kw =>
+          sensorIdLower.includes(kw) || sensorFriendly.includes(kw)
+        );
+        if (matchesAllKeywords) return true;
+      }
+
+      return false;
+    });
+
+    // Fallback: If no sensors match the device filter, return all sensors so dropdown is never broken
+    return filtered.length > 0 ? filtered : allSensors;
+  }
+
   _updateSelectOptions() {
     if (!this._hass || !this._hass.states || !this.shadowRoot) return;
     
@@ -1491,12 +1570,12 @@ class ClimateCardEditor extends HTMLElement {
     const activeEl = this.shadowRoot.activeElement;
     if (activeEl) return;
 
+    const currentThermostat = this._config ? (this._config.entity || '') : '';
     const climateOptions = Object.keys(this._hass.states)
       .filter(id => id.startsWith('climate.'))
       .sort();
-    const sensorOptions = Object.keys(this._hass.states)
-      .filter(id => id.startsWith('sensor.'))
-      .sort();
+
+    const filteredSensorOptions = this._getFilteredSensorOptions(currentThermostat);
 
     const entitySelect = this.shadowRoot.querySelector('#editorEntitySelect');
     const heatingSelect = this.shadowRoot.querySelector('#editorHeatingSelect');
@@ -1505,9 +1584,13 @@ class ClimateCardEditor extends HTMLElement {
     const refreshSelect = (selectEl, options, currentVal) => {
       if (!selectEl) return;
       const currentSelected = selectEl.value || currentVal;
+      let opts = [...options];
+      if (currentSelected && !opts.includes(currentSelected) && this._hass.states[currentSelected]) {
+        opts.unshift(currentSelected);
+      }
       let html = '<option value="">-- Select entity from Home Assistant --</option>';
-      options.forEach(id => {
-        const friendlyName = (this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
+      opts.forEach(id => {
+        const friendlyName = (this._hass.states[id] && this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
         const isSelected = id === currentSelected ? 'selected' : '';
         html += `<option value="${id}" ${isSelected}>${friendlyName} (${id})</option>`;
       });
@@ -1517,9 +1600,9 @@ class ClimateCardEditor extends HTMLElement {
       }
     };
 
-    refreshSelect(entitySelect, climateOptions, this._config.entity);
-    refreshSelect(heatingSelect, sensorOptions, this._config.heating_demand_entity);
-    refreshSelect(coolingSelect, sensorOptions, this._config.cooling_demand_entity);
+    refreshSelect(entitySelect, climateOptions, currentThermostat);
+    refreshSelect(heatingSelect, filteredSensorOptions, this._config ? this._config.heating_demand_entity : '');
+    refreshSelect(coolingSelect, filteredSensorOptions, this._config ? this._config.cooling_demand_entity : '');
   }
 
   render() {
@@ -1546,15 +1629,17 @@ class ClimateCardEditor extends HTMLElement {
       climateOptions = Object.keys(this._hass.states)
         .filter(id => id.startsWith('climate.'))
         .sort();
-      sensorOptions = Object.keys(this._hass.states)
-        .filter(id => id.startsWith('sensor.'))
-        .sort();
+      sensorOptions = this._getFilteredSensorOptions(entity);
     }
 
     const renderSelectOptions = (options, selectedVal) => {
+      let opts = [...options];
+      if (selectedVal && !opts.includes(selectedVal) && this._hass && this._hass.states && this._hass.states[selectedVal]) {
+        opts.unshift(selectedVal);
+      }
       let html = '<option value="">-- Select entity from Home Assistant --</option>';
-      options.forEach(id => {
-        const friendlyName = (this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
+      opts.forEach(id => {
+        const friendlyName = (this._hass.states[id] && this._hass.states[id].attributes && this._hass.states[id].attributes.friendly_name) || id;
         const isSelected = id === selectedVal ? 'selected' : '';
         html += `<option value="${id}" ${isSelected}>${friendlyName} (${id})</option>`;
       });
@@ -1634,7 +1719,7 @@ class ClimateCardEditor extends HTMLElement {
             </select>
           ` : ''}
           <input type="text" class="editor-input" id="editorHeatingInput" value="${heatingEntity}" placeholder="sensor.first_floor_outdoor_heat_pump_demand" />
-          <span class="editor-hint">Sensor measuring outdoor heat pump heating demand percentage</span>
+          <span class="editor-hint">Sensor measuring outdoor heat pump heating demand percentage (filtered by thermostat device)</span>
         </div>
 
         <div class="editor-row">
@@ -1645,7 +1730,7 @@ class ClimateCardEditor extends HTMLElement {
             </select>
           ` : ''}
           <input type="text" class="editor-input" id="editorCoolingInput" value="${coolingEntity}" placeholder="sensor.first_floor_outdoor_cooling_demand" />
-          <span class="editor-hint">Sensor measuring outdoor cooling demand percentage</span>
+          <span class="editor-hint">Sensor measuring outdoor cooling demand percentage (filtered by thermostat device)</span>
         </div>
       </div>
     `;
@@ -1680,12 +1765,17 @@ class ClimateCardEditor extends HTMLElement {
       titleInput.addEventListener('input', (e) => updateConfig('title', e.target.value));
     }
     if (entityInput) {
-      entityInput.addEventListener('input', (e) => updateConfig('entity', e.target.value));
+      entityInput.addEventListener('input', (e) => {
+        updateConfig('entity', e.target.value);
+        setTimeout(() => this._updateSelectOptions(), 10);
+      });
     }
     if (entitySelect) {
       entitySelect.addEventListener('change', (e) => {
-        if (entityInput) entityInput.value = e.target.value;
-        updateConfig('entity', e.target.value);
+        const val = e.target.value;
+        if (entityInput) entityInput.value = val;
+        updateConfig('entity', val);
+        setTimeout(() => this._updateSelectOptions(), 10);
       });
     }
     if (heatingInput) {
