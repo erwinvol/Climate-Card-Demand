@@ -35,12 +35,12 @@ const CARD_STYLES = `
     --demand-bg: rgba(0, 0, 0, 0.2);
 
     --mode-heat-color: #ff7043;
-    --mode-heat-gradient: linear-gradient(to right, #7f1d1d, #ff7043);
+    --mode-heat-gradient: linear-gradient(to right, #ff7043, #7f1d1d);
     --mode-heat-bg: rgba(255, 112, 67, 0.15);
     --mode-heat-border: rgba(255, 112, 67, 0.4);
 
     --mode-cool-color: #38bdf8;
-    --mode-cool-gradient: linear-gradient(to right, #38bdf8, #1e40af);
+    --mode-cool-gradient: linear-gradient(to right, #1e40af, #38bdf8);
     --mode-cool-bg: rgba(30, 64, 175, 0.15);
     --mode-cool-border: rgba(56, 189, 248, 0.4);
 
@@ -572,7 +572,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.07-v1';
+const CLIMATE_CARD_VERSION = '2026.10.07-v2';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -593,10 +593,10 @@ class ClimateCard extends HTMLElement {
     return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join('');
   }
 
-  // Heat: dark red (lowest) -> orange (highest). Cool: light blue (lowest) -> dark blue (highest).
+  // Heat: orange at 7° (t=0) -> dark red at 35° (t=1). Cool: dark blue at 7° (t=0) -> light blue at 35° (t=1).
   static _modeColor(mode, t) {
-    if (mode === 'heat') return ClimateCard._lerpColor('#7f1d1d', '#ff7043', t);
-    if (mode === 'cool') return ClimateCard._lerpColor('#38bdf8', '#1e40af', t);
+    if (mode === 'heat') return ClimateCard._lerpColor('#ff7043', '#7f1d1d', t);
+    if (mode === 'cool') return ClimateCard._lerpColor('#1e40af', '#38bdf8', t);
     return '#78909c';
   }
 
