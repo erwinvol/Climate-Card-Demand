@@ -203,7 +203,7 @@ const CARD_STYLES = `
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
-    cursor: pointer;
+    cursor: default;
   }
 
   .ha-climate-card .dial-svg {
@@ -572,7 +572,7 @@ const CARD_STYLES = `
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.06-v10';
+const CLIMATE_CARD_VERSION = '2026.10.07-v1';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -1082,6 +1082,41 @@ class ClimateCard extends HTMLElement {
 
     const onPointerDown = (e) => {
       if (e.target && e.target.closest('.btn-adjust')) return;
+
+      const isHandle = e.target && (e.target.id === 'dialHandle' || e.target.classList.contains('dial-handle'));
+      const isLineOrTick = e.target && (
+        e.target.classList.contains('dial-track') ||
+        e.target.classList.contains('dial-tick') ||
+        e.target.closest('#progressGroup') ||
+        e.target.closest('#ticksGroup')
+      );
+
+      const svg = root.querySelector('.dial-svg');
+      let isNearArc = false;
+
+      if (svg) {
+        const svgRect = svg.getBoundingClientRect();
+        const centerX = svgRect.left + svgRect.width / 2;
+        const centerY = svgRect.top + svgRect.height / 2;
+        const distFromCenter = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+        const arcRadiusPx = svgRect.width * (100 / 240);
+
+        // Allow a comfortable 22px tolerance band around the 120px ring path (radius 98px to 142px)
+        if (Math.abs(distFromCenter - arcRadiusPx) <= 22) {
+          let deg = Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+          if (deg < 0) deg += 360;
+          let relativeDeg = (deg - 150 + 360) % 360;
+          if (relativeDeg <= 245 || relativeDeg >= 355) {
+            isNearArc = true;
+          }
+        }
+      }
+
+      if (!isHandle && !isLineOrTick && !isNearArc) {
+        // Clicks in center readout, status badge, or blank whitespace do NOT change setpoint
+        return;
+      }
+
       e.preventDefault();
       card._isDragging = true;
       dialContainer.classList.add('dragging');
