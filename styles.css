@@ -30,10 +30,10 @@
   --mode-cool-bg: rgba(30, 64, 175, 0.15);
   --mode-cool-border: rgba(56, 189, 248, 0.4);
 
-  --mode-off-color: #78909c;
-  --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
-  --mode-off-bg: rgba(120, 144, 156, 0.12);
-  --mode-off-border: rgba(120, 144, 156, 0.25);
+  --mode-off-color: #ef4444;
+  --mode-off-gradient: linear-gradient(135deg, #ef4444, #991b1b);
+  --mode-off-bg: rgba(239, 68, 68, 0.16);
+  --mode-off-border: rgba(239, 68, 68, 0.45);
   
   --radius-xl: 28px;
   --radius-lg: 20px;
@@ -243,6 +243,12 @@ body {
   background: var(--mode-cool-bg);
   border-color: var(--mode-cool-border);
   color: var(--mode-cool-color);
+}
+
+.demand-badge.off {
+  background: var(--mode-off-bg);
+  border-color: var(--mode-off-border);
+  color: var(--mode-off-color);
 }
 
 .demand-dot {
@@ -591,14 +597,15 @@ button, .btn-adjust, .mode-btn {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   cursor: pointer;
   color: var(--text-secondary);
   transition: all var(--transition-fast);
 }
 
 .mode-btn svg {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   transition: transform var(--transition-fast);
 }
 
@@ -612,6 +619,14 @@ button, .btn-adjust, .mode-btn {
 
 .mode-btn[data-mode="off"] {
   color: #78909c;
+}
+
+.mode-btn[data-mode="off"] .mode-btn-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .mode-btn:hover {
@@ -641,7 +656,8 @@ button, .btn-adjust, .mode-btn {
 .mode-btn[data-mode="off"].active {
   background: var(--mode-off-bg);
   border-color: var(--mode-off-border);
-  color: #90a4ae;
+  color: var(--mode-off-color);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 /* Simulator Panel */
