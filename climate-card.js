@@ -44,10 +44,10 @@ const CARD_STYLES = `
     --mode-cool-bg: rgba(30, 64, 175, 0.15);
     --mode-cool-border: rgba(56, 189, 248, 0.4);
 
-    --mode-off-color: #ef4444;
-    --mode-off-gradient: linear-gradient(135deg, #ef4444, #991b1b);
-    --mode-off-bg: rgba(239, 68, 68, 0.16);
-    --mode-off-border: rgba(239, 68, 68, 0.45);
+    --mode-off-color: #475569;
+    --mode-off-gradient: linear-gradient(135deg, #64748b, #334155);
+    --mode-off-bg: rgba(71, 85, 105, 0.2);
+    --mode-off-border: rgba(71, 85, 105, 0.5);
     
     --radius-xl: 28px;
     --radius-lg: 20px;
@@ -545,15 +545,7 @@ const CARD_STYLES = `
   }
 
   .ha-climate-card .mode-btn[data-mode="off"] {
-    color: #78909c;
-  }
-
-  .ha-climate-card .mode-btn[data-mode="off"] .mode-btn-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    line-height: 1;
-    text-transform: uppercase;
+    color: #475569;
   }
 
   .ha-climate-card .mode-btn:hover {
@@ -584,11 +576,11 @@ const CARD_STYLES = `
     background: var(--mode-off-bg);
     border-color: var(--mode-off-border);
     color: var(--mode-off-color);
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 4px 15px rgba(71, 85, 105, 0.35);
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.31-v1';
+const CLIMATE_CARD_VERSION = '2026.10.31-v2';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -613,7 +605,7 @@ class ClimateCard extends HTMLElement {
   static _modeColor(mode, t) {
     if (mode === 'heat') return ClimateCard._lerpColor('#ff7043', '#7f1d1d', t);
     if (mode === 'cool') return ClimateCard._lerpColor('#1e40af', '#38bdf8', t);
-    return '#78909c';
+    return '#475569';
   }
 
   _renderProgress(pct, mode) {
@@ -972,13 +964,12 @@ class ClimateCard extends HTMLElement {
                 </svg>
               </button>
               <button class="mode-btn" data-mode="off" title="Turn Off" aria-label="Turn Off">
-                <!-- Power-Off Icon with diagonal slash and OFF label -->
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; max-width: 20px; max-height: 20px; display: block; flex-shrink: 0;">
+                <!-- Power-Off Icon with diagonal slash -->
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                   <line x1="12" y1="2" x2="12" y2="12"></line>
                   <line x1="3.5" y1="3.5" x2="20.5" y2="20.5"></line>
                 </svg>
-                <span class="mode-btn-label">OFF</span>
               </button>
             </div>
           </div>
