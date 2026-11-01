@@ -44,10 +44,10 @@ const CARD_STYLES = `
     --mode-cool-bg: rgba(30, 64, 175, 0.15);
     --mode-cool-border: rgba(56, 189, 248, 0.4);
 
-    --mode-off-color: #78909c;
-    --mode-off-gradient: linear-gradient(135deg, #90a4ae, #546e7a);
-    --mode-off-bg: rgba(120, 144, 156, 0.12);
-    --mode-off-border: rgba(120, 144, 156, 0.25);
+    --mode-off-color: #ef4444;
+    --mode-off-gradient: linear-gradient(135deg, #ef4444, #991b1b);
+    --mode-off-bg: rgba(239, 68, 68, 0.16);
+    --mode-off-border: rgba(239, 68, 68, 0.45);
     
     --radius-xl: 28px;
     --radius-lg: 20px;
@@ -183,6 +183,12 @@ const CARD_STYLES = `
     background: var(--mode-cool-bg);
     border-color: var(--mode-cool-border);
     color: var(--mode-cool-color);
+  }
+
+  .ha-climate-card .demand-badge.off {
+    background: var(--mode-off-bg);
+    border-color: var(--mode-off-border);
+    color: var(--mode-off-color);
   }
 
   .ha-climate-card .demand-dot {
@@ -515,6 +521,7 @@ const CARD_STYLES = `
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 0.35rem;
     cursor: pointer;
     color: var(--text-secondary);
     transition: all var(--transition-fast);
@@ -539,6 +546,14 @@ const CARD_STYLES = `
 
   .ha-climate-card .mode-btn[data-mode="off"] {
     color: #78909c;
+  }
+
+  .ha-climate-card .mode-btn[data-mode="off"] .mode-btn-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    text-transform: uppercase;
   }
 
   .ha-climate-card .mode-btn:hover {
@@ -568,11 +583,12 @@ const CARD_STYLES = `
   .ha-climate-card .mode-btn[data-mode="off"].active {
     background: var(--mode-off-bg);
     border-color: var(--mode-off-border);
-    color: #90a4ae;
+    color: var(--mode-off-color);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
   }
 `;
 
-const CLIMATE_CARD_VERSION = '2026.10.07-v3';
+const CLIMATE_CARD_VERSION = '2026.10.31-v1';
 console.info(`%c CLIMATE-CARD %c ${CLIMATE_CARD_VERSION} `, 'background:#ff7043;color:#fff;font-weight:700', 'background:#1e293b;color:#fff');
 
 class ClimateCard extends HTMLElement {
@@ -956,11 +972,13 @@ class ClimateCard extends HTMLElement {
                 </svg>
               </button>
               <button class="mode-btn" data-mode="off" title="Turn Off" aria-label="Turn Off">
-                <!-- Power Icon -->
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px; max-width: 22px; max-height: 22px; display: block; margin: auto;">
+                <!-- Power-Off Icon with diagonal slash and OFF label -->
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; max-width: 20px; max-height: 20px; display: block; flex-shrink: 0;">
                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                   <line x1="12" y1="2" x2="12" y2="12"></line>
+                  <line x1="3.5" y1="3.5" x2="20.5" y2="20.5"></line>
                 </svg>
+                <span class="mode-btn-label">OFF</span>
               </button>
             </div>
           </div>
@@ -1371,9 +1389,10 @@ class ClimateCard extends HTMLElement {
       demandBadge.className = 'demand-badge';
       if (hvacAction === 'heating') demandBadge.classList.add('heating');
       if (hvacAction === 'cooling') demandBadge.classList.add('cooling');
+      if (mode === 'off' || hvacAction === 'off') demandBadge.classList.add('off');
     }
     if (demandText) {
-      demandText.innerText = hvacAction.toUpperCase();
+      demandText.innerText = (mode === 'off' ? 'OFF' : hvacAction.toUpperCase());
     }
 
     // 4. Setpoint Target Display
